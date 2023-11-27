@@ -1,0 +1,9 @@
+read_envi
+*.pdf
+*.o
+*~
+*.img
+**/*.awk
+**/*.old
+**/__pycache__
+
