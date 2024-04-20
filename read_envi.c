@@ -3,7 +3,6 @@
 #include <math.h>
 #include "strparse.h"
 
-
 #define MAX_LINE_LEN 6000
 
 #ifndef TRUE
@@ -19,10 +18,10 @@ typedef struct  {
     int n_samples ;
     int n_lines ;
     int n_bands ;
+    int d_type ;
     char interleave[5];
-    int wavels[5000];
+    float wavels[5000];
 } envi_meta ;
-
 
 void read_envi_header(FILE * ifp, envi_meta * hdr)
 {
@@ -30,6 +29,7 @@ void read_envi_header(FILE * ifp, envi_meta * hdr)
     char line[MAX_LINE_LEN] ;
     char tmpc1[MAX_LINE_LEN] ;
     char tmpc2[MAX_LINE_LEN] ;
+    char *tmpsp;
     int  nlines = 0;
     int  nwvls = 0;
     char break_out=FALSE ;
@@ -64,27 +64,24 @@ void read_envi_header(FILE * ifp, envi_meta * hdr)
         else if( !strncmp( tmpc1, "lines", 5 ) ) hdr->n_lines = atoi( tmpc2 ); 
         else if( !strncmp( tmpc1, "bands", 5 ) ) hdr->n_bands = atoi( tmpc2 ); 
         else if( !strncmp( tmpc1, "interleave", 10 ) ) strcpy( hdr->interleave, tmpc2 ); 
+        else if( !strncmp( tmpc1, "data type", 9) ) hdr->d_type = atoi( tmpc2 ); 
         
         /*wavelength is a special case*/
-        else if( !strncmp( tmpc1, "Wavelength", 10 ) ){
-            pos=strcspn(tmpc2, "{");
-            strcpy(line, tmpc2+pos+1);
-            //printf("%s",line);
-            //printf("%s",tmpc2);
-            //exit(-1);
-            while( TRUE ){
-                while( get_first_string_element( line, tmpc1 ) ){
-                    
-                    pos=strspn(line, "0123456789.");
-                    printf("%d ",pos);
-                    /*check for the end of the wavelength record*/
-                    pos=strcspn(tmpc1, "}");
-                    if(*(tmpc1+pos) == '}'){ break_out=TRUE;break;}
-                }
+        else if( !strcmp( tmpc1, "Wavelength ")){
+            while( fgets( line, MAX_LINE_LEN, ifp ) ){
+                tmpsp = strtok(line, ",");
+                while( tmpsp != NULL ) {
+                     /*check for the end of the wavelength record*/
+                     if(strchr(tmpsp, '}')!=NULL){break_out=TRUE;break;}
+                     if(!is_string_blank(tmpsp))
+                         /*if we get here we should have a valid wavelength*/
+                         *(hdr->wavels+nwvls++) = atof(tmpsp);
+                     /*get next token*/
+                     tmpsp = strtok(NULL, ",");                         
+                 }
+                /*if break_out==TRUE we are at the end of the wavelength section*/     
                 if( break_out ) break ;
-                if (fgets( line, MAX_LINE_LEN, ifp ) == NULL ) break ;
             }
-
         }        
     }            
     return;
@@ -103,9 +100,13 @@ int main( int argc, char **argv )
 
    
     read_envi_header(ifp, &hdr);
+    for(int i=0; i<hdr.n_bands; i++) printf("%0.2f ", hdr.wavels[i]);
+    printf("\n");
     printf("samples: %d\n",hdr.n_samples);
     printf("lines: %d\n",hdr.n_lines);
     printf("bands: %d\n",hdr.n_bands);
     printf("interleave: %s\n",hdr.interleave);
+    printf("data type: %d\n",hdr.d_type);
+ 
     return(EXIT_SUCCESS);
 }
