@@ -3,6 +3,7 @@
 *~
 *.img
 *.bil
+*.pickle
 data/
 **/*.awk
 **/*.old
