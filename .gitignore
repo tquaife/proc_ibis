@@ -1,8 +1,9 @@
-read_envi
 *.pdf
 *.o
 *~
 *.img
+*.bil
+data/
 **/*.awk
 **/*.old
 **/__pycache__
