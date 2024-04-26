@@ -85,6 +85,22 @@ class Spectra(object):
     wmax=wband[1]
     return np.mean(self.data[(self.wavl>=wmin)&(self.wavl<=wmax)])
      
+  def max_over_band(self, wband):
+    """calculates the maximum data value over the waveband 
+    specified by wmin and wmax 
+    """
+    wmin=wband[0]
+    wmax=wband[1]
+    return np.max(self.data[(self.wavl>=wmin)&(self.wavl<=wmax)])
+     
+  def min_over_band(self, wband):
+    """calculates the minimum data value over the waveband 
+    specified by wmin and wmax 
+    """
+    wmin=wband[0]
+    wmax=wband[1]
+    return np.min(self.data[(self.wavl>=wmin)&(self.wavl<=wmax)])
+
             
   def interpolate(self,resltn=0.1):
     """Interpolate spectra to the given resolution.
