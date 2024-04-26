@@ -45,7 +45,8 @@ def sif_sFLD( ibis_spect, reference, band="O2a" ):
     Pilar et al. (2019) https://doi.org/10.3390/rs11080962
     
     Find the minumum and maximum values in predefined bands
-    and carry out and FLD calculation with those values
+    and carry out and FLD calculation with those values.
+    Band definitions are from Pilar et al. (ibid).
     """
     
     if band=="O2a":
