@@ -92,6 +92,29 @@ class Spectra(object):
     wmin=wband[0]
     wmax=wband[1]
     return np.max(self.data[(self.wavl>=wmin)&(self.wavl<=wmax)])
+
+
+  def wavl_of_max_over_band(self, wband):
+    """finds the wavelength at which the maximum 
+    data value occurs in the waveband  specified by wmin and wmax 
+    """
+    wmin=wband[0]
+    wmax=wband[1]
+    idx=np.argmax(self.data[(self.wavl>=wmin)&(self.wavl<=wmax)])
+    idx+=len(self.data[self.wavl<wmin])
+    return self.wavl[idx]
+
+
+  def wavl_of_min_over_band(self, wband):
+    """finds the wavelength at which the minimum 
+    data value occurs in the waveband  specified by wmin and wmax 
+    """
+    wmin=wband[0]
+    wmax=wband[1]
+    idx=np.argmin(self.data[(self.wavl>=wmin)&(self.wavl<=wmax)])
+    idx+=len(self.data[self.wavl<wmin])
+    return self.wavl[idx]
+
      
   def min_over_band(self, wband):
     """calculates the minimum data value over the waveband 
@@ -232,6 +255,7 @@ if __name__=="__main__":
 
   doTest1=True
   doTest2=False
+  doTest3=False
 
   if doTest1:
     #test simulation of S2 bands
@@ -256,4 +280,17 @@ if __name__=="__main__":
     s.trim(1200,2000)
     plt.plot(s.wavl,s.data,'--')
     plt.show()  
+
+  if doTest3:
+    #test the wavl and min in band function
+    wref=Spectra(fname="../data/white_reference.csv",ftype="CSV",hdrLines=0)
+    wmin=720
+    wmax=724
+    print(wref.wavl_of_min_over_band((wmin,wmax)))
+    rad=wref.data[(wref.wavl>=wmin)&(wref.wavl<=wmax)]
+    wvl=wref.wavl[(wref.wavl>=wmin)&(wref.wavl<=wmax)]
+
+    for (i,w) in enumerate (wvl):
+        print(i,w,rad[i])
+
 
