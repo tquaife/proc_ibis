@@ -17,6 +17,7 @@ wavelength_grid_file ibis_wl_grid.txt
 fluorescence_file ../../libRadtran-2.0.4/examples/UVSPEC_FLUORESCENCE.FLU
 #fluorescence 0.0
 albedo_file ../../libRadtran-2.0.4/examples/UVSPEC_FLUORESCENCE.TOC
+#albedo 1.0
 
 # Lots of atmospheric lines in this part of the spectrum. Use gas absorption
 # calculated by arts.

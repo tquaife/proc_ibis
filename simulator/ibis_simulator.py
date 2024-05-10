@@ -7,8 +7,32 @@ from spectra_tools.spectra import Spectra
 
 class libRadSpectra(Spectra):
 
+    def convert_units_Qcm2_to_Wm2_single(self,wvl,datum):
+        """
+        input should be in Q/s/cm2/nm
+        n.b. Q is *not* moles, it is the number of photons
+        
+        output is in W/m2/nm
+        """
+
+        #Planck constant
+        h=6.626E-34
+        #speed of light 
+        c=3E8
+        #convert wavlength to m
+        w=(wvl*10**-9)
+        #energy per photon (J/Q)
+        e=h*c/w            
+        #from c2 to m2
+        e*=10000
+        #convert data to W/m2
+        return datum*e
+
+
     def convert_units_Qcm2_to_Wm2(self):
         """
+        Applies convert_units_Qcm2_to_Wm2_single to the entire spectrum
+
         input should be in Q/s/cm2/nm
         n.b. Q is *not* moles, it is the number of photons
         
@@ -18,21 +42,9 @@ class libRadSpectra(Spectra):
         could really do with some checking of units in the 
         base class.
         """
-                
-        #Planck constant
-        h=6.626E-34
-        #speed of light 
-        c=3E8
-
+        
         for (i,w) in enumerate(self.wavl):
-            #convert wavlength to m
-            w=(w*10**-9)
-            #energy per photon (J/Q)
-            e=h*c/w            
-            #from c2 to m2
-            e*=10000
-            #convert data to W/m2
-            self.data[i]=self.data[i]*e
+            self.data[i]=self.convert_units_Qcm2_to_Wm2_single(w,self.data[i])
          
     def resample_to_ibis(self,ibis_wavls,band_width=0.11):
         """resample a libradtran spectra to IBIS bands 
