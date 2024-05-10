@@ -40,9 +40,28 @@ class Spectra(object):
         self.loadSVCSig(f)   
       elif self.ftype=="CSV":
         self.loadCSV(f,wavlCol,dataCol,hdrLines) 
+      elif self.ftype=="TXT":
+        self.loadSpaceDelim(f,wavlCol,dataCol,hdrLines) 
       else:
         raise UnknownFileType(self.ftype)
       f.close()
+
+  def loadSpaceDelim(self,f,wavlCol=0,dataCol=1,hdrLines=1):
+    """Read in data from a standard CSV file
+    
+    Arguments:
+    
+    f        - File object
+    wavlCol  - column containing wavelengths
+    dataCol  - column containing dataectance data
+    hdrLines - Number of lines to skip at start of file
+    """
+    
+    tmp=np.loadtxt(f,skiprows=hdrLines,usecols=(wavlCol,dataCol))
+    self.wavl=tmp[:,0]
+    self.data=tmp[:,1]
+
+
     
   def loadCSV(self,f,wavlCol=0,dataCol=1,hdrLines=1):
     """Read in data from a standard CSV file
@@ -124,6 +143,14 @@ class Spectra(object):
     wmax=wband[1]
     return np.min(self.data[(self.wavl>=wmin)&(self.wavl<=wmax)])
 
+
+  def closest_to_wavl(self, wvl):
+      """Gets the wavelength and spectral data that is 
+      closest to the wavelength specified in wvl 
+      """
+      idx = int(np.abs(self.wavl-wvl).argmin())
+      return (self.wavl[idx],self.data[idx])
+                  
             
   def interpolate(self,resltn=0.1):
     """Interpolate spectra to the given resolution.

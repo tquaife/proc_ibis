@@ -44,7 +44,7 @@ def sif_sFLD( ibis_spect, wref, band="O2a" ):
     """calculate SIF using the sFLD method defined in 
     Pilar et al. (2019) https://doi.org/10.3390/rs11080962
     
-    Find the minumum and maximum values in predefined bands
+    Find the minimum and maximum values in predefined bands
     and carry out and FLD calculation with those values.
     Band definitions are from Pilar et al. (ibid).
     """
@@ -71,7 +71,7 @@ def sif_3FLD( ibis_spect, wref, band="O2a" ):
     with band definitions from
     Pilar et al. (2019) https://doi.org/10.3390/rs11080962
     
-    Find the minumum and maximum values in predefined bands
+    Find the minimum and maximum values in predefined bands
     and carry out and 3FLD calculation with those values.
     """
     
@@ -107,6 +107,44 @@ def sif_3FLD( ibis_spect, wref, band="O2a" ):
     return (Lin-Ecorr*(w21*Lout_L+w22*Lout_R))/(1-Ecorr)
 
 
+def sif_3FLD__test( ibis_spect, wref, band="O2a" ):
+    """
+    TEST VERSION - DO NOT USE
+    
+    calculate SIF using the 3FLD method defined in 
+    Damm et al. (2011) https://doi.org/10.1016/j.rse.2011.03.011
+    with band definitions from
+    Pilar et al. (2019) https://doi.org/10.3390/rs11080962
+    
+    Find the minimum and maximum values in predefined bands
+    and carry out and 3FLD calculation with those values.
+    """
+    
+    if band=="O2a":
+        out_wl_left=753  
+        out_wl_right=771 
+        in_wl=760
+    elif band=="O2b":
+        out_wl_left=685.5 
+        out_wl_right=697.5 
+        in_wl=686.7
+    else:
+        raise Exception("undefined absorption feature")
+    
+    (Eout_L_wvl,Eout_L)=wref.closest_to_wavl(out_wl_left)          
+    (Eout_R_wvl,Eout_R)=wref.closest_to_wavl(out_wl_right)          
+    (_,Ein)=wref.closest_to_wavl(in_wl)
+
+    (Lout_L_wvl,Lout_L)=ibis_spect.closest_to_wavl(out_wl_left)          
+    (Lout_R_wvl,Lout_R)=ibis_spect.closest_to_wavl(out_wl_right)          
+    (Lin_wvl,Lin)=ibis_spect.closest_to_wavl(in_wl)
+
+    w21=(Eout_R_wvl-Lin_wvl)/(Eout_R_wvl-Eout_L_wvl)
+    w22=(Lin_wvl-Eout_L_wvl)/(Eout_R_wvl-Eout_L_wvl)
+
+    Ecorr=Ein/(w21*Eout_L+w22*Eout_R)
+
+    return (Lin-Ecorr*(w21*Lout_L+w22*Lout_R))/(1-Ecorr)
 
 
 
@@ -147,17 +185,17 @@ if __name__=="__main__":
             ibis_spect.data=copy(line[:,j])
             if not ibis_spect.data.any():
                continue
-            output_sif_o2a[i,j]=sif_3FLD(ibis_spect, wref, band="O2a")
-            output_sif_o2b[i,j]=sif_3FLD(ibis_spect, wref, band="O2b")
+            output_sif_o2a[i,j]=sif_3FLD__test(ibis_spect, wref, band="O2a")
+            output_sif_o2b[i,j]=sif_3FLD__test(ibis_spect, wref, band="O2b")
             #output_ndvi[i,j]=ibis_ndvi(ibis_spect, wref)
     
     #convert units
     output_sif_o2a*=ibis_data.units_to_mw_m2
     output_sif_o2b*=ibis_data.units_to_mw_m2
 
-    with open('sif_o2a_3FLD.pickle', 'wb') as f:
+    with open('sif_o2a_3FLD__test.pickle', 'wb') as f:
         pickle.dump(output_sif_o2a, f, pickle.HIGHEST_PROTOCOL)
-    with open('sif_o2b_3FLD.pickle', 'wb') as f:
+    with open('sif_o2b_3FLD__test.pickle', 'wb') as f:
         pickle.dump(output_sif_o2b, f, pickle.HIGHEST_PROTOCOL)
     #with open('ndvi.pickle', 'wb') as f:
     #    pickle.dump(output_ndvi, f, pickle.HIGHEST_PROTOCOL)
