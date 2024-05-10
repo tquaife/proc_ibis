@@ -57,17 +57,25 @@ class libRadSpectra(Spectra):
 
 if __name__=="__main__":
 
-    fn="UVSPEC_FLUORESCENCE.OUT"
+    fn="uvspec_fluorescence_z1000m.out"
     s=libRadSpectra(fn,ftype="TXT",dataCol=2,hdrLines=0)
     s.convert_units_Qcm2_to_Wm2()
-    
-    plt.plot(s.wavl,s.data)
-    
+    #plt.plot(s.wavl,s.data)    
     ibis_wavls=np.genfromtxt("ibis_wavelengths.txt")    
     s.resample_to_ibis(ibis_wavls)
 
-    plt.plot(s.wavl,s.data)
+    fn="uvspec_fluorescence_z1000m_no_fluor.out"
+    n=libRadSpectra(fn,ftype="TXT",dataCol=2,hdrLines=0)
+    n.convert_units_Qcm2_to_Wm2()
+    #plt.plot(s.wavl,s.data)    
+    ibis_wavls=np.genfromtxt("ibis_wavelengths.txt")    
+    n.resample_to_ibis(ibis_wavls)
 
+
+    plt.plot(s.wavl,s.data,label="w/ SIF")
+    plt.plot(n.wavl,n.data,label="no SIF")
+    #plt.plot(n.wavl,s.data-n.data,label="difference")
+    plt.legend()
     plt.show()
     
     
