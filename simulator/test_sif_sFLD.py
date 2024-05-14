@@ -26,10 +26,10 @@ if __name__=="__main__":
     a.convert_units_Qcm2_to_Wm2()
     idx=np.abs(a.wavl-f_wvl_o2a).argmin()
 
-
-    print(sif_sFLD(f,w)*1000)
-    print(sif_3FLD(f,w)*1000)
-    print(a.data[idx]*1000)
+    print("truth:",a.data[idx]*1000)
+ 
+    print("sFLD: ",sif_sFLD(f,w)*1000)
+    print("3FLD: ",sif_3FLD(f,w)*1000)
         
     #plt.plot(w.wavl,f.data/w.data)
     #plt.show()
