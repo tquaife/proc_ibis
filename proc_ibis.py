@@ -64,6 +64,60 @@ def sif_sFLD( ibis_spect, wref, band="O2a" ):
     Lin=ibis_spect.min_over_band(in_wband)
     return (Eout*Lin-Ein*Lout)/(Eout-Ein)
 
+def sif_sFLD__test2( ibis_spect, wref, band="O2a" ):
+    """calculate SIF using the sFLD method defined in 
+    Pilar et al. (2019) https://doi.org/10.3390/rs11080962
+    
+    Find the minimum and maximum values in predefined bands
+    and carry out and FLD calculation with those values.
+    Band definitions are from Pilar et al. (ibid).
+    """
+    
+    if band=="O2a":
+        out_wband=(752.5, 753) 
+        in_wband=(760.5, 761.0)
+    elif band=="O2b":
+        out_wband=(680, 686) 
+        in_wband=(686, 697)
+    else:
+        raise Exception("undefined absorption feature")
+    
+    Eout=wref.avg_over_band(out_wband)
+    Ein=wref.avg_over_band(in_wband)
+    Lout=ibis_spect.avg_over_band(out_wband)
+    Lin=ibis_spect.avg_over_band(in_wband)
+    return (Eout*Lin-Ein*Lout)/(Eout-Ein)
+
+
+def sif_sFLD__test( ibis_spect, wref, band="O2a" ):
+    """calculate SIF using the sFLD method defined in 
+    Pilar et al. (2019) https://doi.org/10.3390/rs11080962
+    
+    Find the minimum and maximum values in predefined bands
+    and carry out and FLD calculation with those values.
+    Band definitions are from Pilar et al. (ibid).
+    """
+    
+    if band=="O2a":
+        out_wl_left=753  
+        #out_wl_right=771 
+        in_wl=760
+    elif band=="O2b":
+        out_wl_left=686.5 
+        #out_wl_right=697.5 
+        in_wl=687.0
+    else:
+        raise Exception("undefined absorption feature")
+    
+    (_,Eout)=wref.closest_to_wavl(out_wl_left)
+    (_,Ein)=wref.closest_to_wavl(in_wl)
+    (_,Lout)=ibis_spect.closest_to_wavl(out_wl_left)
+    (_,Lin)=ibis_spect.closest_to_wavl(in_wl)
+    return (Eout*Lin-Ein*Lout)/(Eout-Ein)
+
+
+
+
 
 def sif_3FLD( ibis_spect, wref, band="O2a" ):
     """calculate SIF using the 3FLD method defined in 
@@ -125,9 +179,9 @@ def sif_3FLD__test( ibis_spect, wref, band="O2a" ):
         out_wl_right=771 
         in_wl=760
     elif band=="O2b":
-        out_wl_left=685.5 
+        out_wl_left=686.5 
         out_wl_right=697.5 
-        in_wl=686.7
+        in_wl=687.0
     else:
         raise Exception("undefined absorption feature")
     

@@ -5,33 +5,39 @@ import numpy as np
 from matplotlib import pyplot as plt
 from spectra_tools.spectra import Spectra
 
+def convert_units_Qcm2_to_Wm2(wvl,datum):
+    """
+    input should be in Q/s/cm2/nm
+    n.b. Q is *not* moles, it is the number of photons
+    
+    output is in W/m2/nm
+    """
+
+    #Planck constant
+    h=6.626E-34
+    #speed of light 
+    c=3E8
+    #convert wavlength to m
+    w=(wvl*10**-9)
+    #energy per photon (J/Q)
+    e=h*c/w            
+    #from c2 to m2
+    e*=10000
+    #convert data to W/m2
+    return datum*e
+
+
 class libRadSpectra(Spectra):
 
-    def convert_units_Qcm2_to_Wm2_single(self,wvl,datum):
+    def __init__(self, fname=None,ftype="TXT",wavlCol=0,dataCol=1,hdrLines=0):
+        """Extends the ARSF BilReader class to add 
+        elements specific to the IBIS data
         """
-        input should be in Q/s/cm2/nm
-        n.b. Q is *not* moles, it is the number of photons
-        
-        output is in W/m2/nm
-        """
-
-        #Planck constant
-        h=6.626E-34
-        #speed of light 
-        c=3E8
-        #convert wavlength to m
-        w=(wvl*10**-9)
-        #energy per photon (J/Q)
-        e=h*c/w            
-        #from c2 to m2
-        e*=10000
-        #convert data to W/m2
-        return datum*e
-
+        super().__init__(fname=fname,ftype=ftype,wavlCol=wavlCol,dataCol=dataCol,hdrLines=hdrLines)
 
     def convert_units_Qcm2_to_Wm2(self):
         """
-        Applies convert_units_Qcm2_to_Wm2_single to the entire spectrum
+        Applies convert_units_Qcm2_to_Wm2 to the entire spectrum
 
         input should be in Q/s/cm2/nm
         n.b. Q is *not* moles, it is the number of photons
@@ -44,7 +50,7 @@ class libRadSpectra(Spectra):
         """
         
         for (i,w) in enumerate(self.wavl):
-            self.data[i]=self.convert_units_Qcm2_to_Wm2_single(w,self.data[i])
+            self.data[i]=convert_units_Qcm2_to_Wm2(w,self.data[i])
          
     def resample_to_ibis(self,ibis_wavls,band_width=0.11):
         """resample a libradtran spectra to IBIS bands 
@@ -69,14 +75,16 @@ class libRadSpectra(Spectra):
 
 if __name__=="__main__":
 
-    fn="uvspec_fluorescence_z1000m.out"
-    s=libRadSpectra(fn,ftype="TXT",dataCol=2,hdrLines=0)
+    fn="lrt_io/uvspec_fluorescence_z1000m.out"
+    #s=libRadSpectra(fn,ftype="TXT",dataCol=2,hdrLines=0)
+    s=libRadSpectra(fn)
+    print(s.ftype)
     s.convert_units_Qcm2_to_Wm2()
     #plt.plot(s.wavl,s.data)    
     ibis_wavls=np.genfromtxt("ibis_wavelengths.txt")    
     s.resample_to_ibis(ibis_wavls)
 
-    fn="uvspec_fluorescence_z1000m_no_fluor.out"
+    fn="lrt_io/uvspec_fluorescence_z1000m_no_fluor.out"
     n=libRadSpectra(fn,ftype="TXT",dataCol=2,hdrLines=0)
     n.convert_units_Qcm2_to_Wm2()
     #plt.plot(s.wavl,s.data)    
