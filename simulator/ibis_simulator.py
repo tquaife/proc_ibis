@@ -51,8 +51,9 @@ class libRadSpectra(Spectra):
         
         for (i,w) in enumerate(self.wavl):
             self.data[i]=convert_units_Qcm2_to_Wm2(w,self.data[i])
+    
          
-    def resample_to_ibis(self,ibis_wavls,band_width=0.11):
+    def resample_to_ibis(self,ibis_wavls,band_width=0.35): #original: band_width=0.11
         """resample a libradtran spectra to IBIS bands 
         
         ibis_wavls is an array of band centers
@@ -61,6 +62,11 @@ class libRadSpectra(Spectra):
         n.b. wavelength units should match with
         whatever has been produced by libradtran
         (typically nm).
+        
+        the difference between band centres is 0.11nm but
+        averaging over a band width of 0.11nm gives spectra
+        that are not nearly as smooth as the IBIS.
+        Using 0.35nm gives a more realistic result.
         """
         data_new=[]
         for w in ibis_wavls:

@@ -4,7 +4,9 @@
 *.img
 *.bil
 *.pickle
+**/*.pickle
 data/
+data_in/
 **/*.awk
 **/*.old
 **/__pycache__
