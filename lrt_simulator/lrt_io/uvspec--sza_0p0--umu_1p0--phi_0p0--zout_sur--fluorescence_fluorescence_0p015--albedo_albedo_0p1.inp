@@ -7,7 +7,7 @@ source solar solar_spectrum.txt
 
 wavelength_grid_file ibis_wl_grid.txt
 
-fluorescence 0.0
+fluorescence 0.015
 albedo 0.1
 
 mol_tau_file abs ../../libRadtran-2.0.4/examples/UVSPEC_FLUORESCENCE_arts-640-810.nc

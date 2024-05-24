@@ -18,11 +18,11 @@ sza 0.0
 number_of_streams 16
 rte_solver disort
 
-umu 1.0
-phi 0.0 
+umu -1.0 1.0
+phi 0.0
 
 zout sur
-output_user lambda uu edir edn eup uavg
+output_user lambda uu 
 quiet
 
 #raman 

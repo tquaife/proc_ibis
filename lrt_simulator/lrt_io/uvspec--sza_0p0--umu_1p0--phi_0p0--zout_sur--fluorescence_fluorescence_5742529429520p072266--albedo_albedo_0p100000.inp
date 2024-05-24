@@ -7,8 +7,8 @@ source solar solar_spectrum.txt
 
 wavelength_grid_file ibis_wl_grid.txt
 
-fluorescence 0.0
-albedo 0.1
+fluorescence 5742529429520.072266
+albedo 0.100000
 
 mol_tau_file abs ../../libRadtran-2.0.4/examples/UVSPEC_FLUORESCENCE_arts-640-810.nc
 wavelength 668 782 # IBIS range
