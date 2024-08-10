@@ -5,13 +5,14 @@ import numpy as np
 from arsf_envi_reader import envi_header as envhdr
 from arsf_envi_reader.numpy_bin_reader import BilReader
 from spectra_tools.spectra import Spectra
-from sif_retrieval import sif_sFLD, sif_3FLD, sif_opts_FLD_Cendrero19_O2a, sif_opts_FLD_Cendrero19_O2b
+#from sif_retrieval import sif_sFLD, sif_3FLD, sif_linReg, sif_opts_FLD_Cendrero19_O2a, sif_opts_FLD_Cendrero19_O2b
+from sif_retrieval import *
 
 import sys
 
 class ibisBilReader(BilReader):
     
-    def __init__(self, ibis_filename ):
+    def __init__(self, ibis_filename):
         """Extends the ARSF BilReader class to add 
         elements specific to the IBIS data
         """
@@ -35,7 +36,6 @@ def ibis_ndvi( ibis_spect, wref, red_wband=(670, 680), nir_wband=(770, 780)):
     nir=ibis_spect.avg_over_band(nir_wband)/wref.avg_over_band(nir_wband)
     return (nir-red)/(red+nir)
 
-
 if __name__=="__main__":
 
     #create ibis data object
@@ -54,26 +54,38 @@ if __name__=="__main__":
     output_sif_o2b=np.ones([ibis_data.lines,ibis_data.samples])*-9999
     #output_ndvi=np.ones([ibis_data.lines,ibis_data.samples])*-9999
 
+    #precompute pseudo inverse for regression
+    pseudo_o2a=sif_linReg_compute_pseudo_inverse(wref, sif_opts_FLD_Cendrero19_O2a)
+    pseudo_o2b=sif_linReg_compute_pseudo_inverse(wref, sif_opts_FLD_Cendrero19_O2b)
+
+
     #loop over the IBIS data, exploiting the
     #fact that the BilReader class creates an
     #iterable object
     for (i,line) in enumerate(ibis_data):
+        print(i,end=" ",flush=True)
         for j in range(ibis_data.samples):
             ibis_spect.data=copy(line[:,j])
             if not ibis_spect.data.any():
                continue
-            output_sif_o2a[i,j]=sif_3FLD(ibis_spect, wref, sif_opts_FLD_Cendrero19_O2a)
-            output_sif_o2b[i,j]=sif_3FLD(ibis_spect, wref, sif_opts_FLD_Cendrero19_O2b)
+            #output_sif_o2a[i,j]=sif_linReg(ibis_spect, wref, sif_opts_FLD_Cendrero19_O2a)
+            #output_sif_o2b[i,j]=sif_linReg(ibis_spect, wref, sif_opts_FLD_Cendrero19_O2b)
+            output_sif_o2a[i,j]=sif_linReg_use_precomp_inverse(ibis_spect, pseudo_o2a, sif_opts_FLD_Cendrero19_O2a)
+            output_sif_o2b[i,j]=sif_linReg_use_precomp_inverse(ibis_spect, pseudo_o2b, sif_opts_FLD_Cendrero19_O2b)
             #output_ndvi[i,j]=ibis_ndvi(ibis_spect, wref)
     
     #convert units
     output_sif_o2a*=ibis_data.units_to_mw_m2
     output_sif_o2b*=ibis_data.units_to_mw_m2
 
-    with open('./data_out/sif_o2a_3FLD.pickle', 'wb') as f:
+    with open('./data_out/sif_o2a_linReg.pickle', 'wb') as f:
         pickle.dump(output_sif_o2a, f, pickle.HIGHEST_PROTOCOL)
-    with open('./data_out/sif_o2b_3FLD.pickle', 'wb') as f:
+    with open('./data_out/sif_o2b_linReg.pickle', 'wb') as f:
         pickle.dump(output_sif_o2b, f, pickle.HIGHEST_PROTOCOL)
+    #with open('./data_out/sif_o2a_3FLD.pickle', 'wb') as f:
+    #    pickle.dump(output_sif_o2a, f, pickle.HIGHEST_PROTOCOL)
+    #with open('./data_out/sif_o2b_3FLD.pickle', 'wb') as f:
+    #    pickle.dump(output_sif_o2b, f, pickle.HIGHEST_PROTOCOL)
     #with open('./data_out/ndvi.pickle', 'wb') as f:
     #    pickle.dump(output_ndvi, f, pickle.HIGHEST_PROTOCOL)
 

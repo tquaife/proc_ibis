@@ -1,4 +1,5 @@
 import numpy as np
+from copy import copy
 from spectra_tools.spectra import Spectra
 
 class sif_opts_base: pass
@@ -13,6 +14,60 @@ sif_opts_FLD_Cendrero19_O2b=sif_opts_base()
 sif_opts_FLD_Cendrero19_O2b.in_wband=(686, 697) 
 sif_opts_FLD_Cendrero19_O2b.outL_wband=(680, 686)  
 sif_opts_FLD_Cendrero19_O2b.outR_wband=(697, 698) 
+
+
+def sif_linReg_compute_pseudo_inverse( wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
+
+    wl_min=sif_opts.in_wband[0]
+    wl_max=sif_opts.in_wband[1]
+
+    wref=copy(wref_spect)    
+    wref.trim(wl_min,wl_max)
+
+    X=np.ones((len(wref.data),2))
+    X[:,0]=np.array(wref.data)
+
+    return(np.linalg.pinv(X))
+
+def sif_linReg_use_precomp_inverse( target_spect, pseudo_inv, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
+
+    wl_min=sif_opts.in_wband[0]
+    wl_max=sif_opts.in_wband[1]
+
+    targ=copy(target_spect)
+    targ.trim(wl_min,wl_max)
+
+    out=np.matmul(pseudo_inv,targ.data)
+
+    return(out[1])
+
+def sif_linReg( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
+    """use linear regression to solve the equation: 
+    I_up_target=I_up_reference*(R_target/R_reference)+SIF
+    
+    This is similar in concept to sFLD but uses all the data points with the 
+    window. Can be quite slow if the matrix used is big but, in principle the
+    inverse could be pre-computed for circumstances where the reference spectra
+    is static (for example a flight campaign).
+    """
+    #wl_min=sif_opts.outL_wband[0]
+    #wl_max=sif_opts.outR_wband[1]
+
+    wl_min=sif_opts.in_wband[0]
+    wl_max=sif_opts.in_wband[1]
+
+    wref=copy(wref_spect)    
+    wref.trim(wl_min,wl_max)
+    targ=copy(target_spect)
+    targ.trim(wl_min,wl_max)
+
+    y=np.array(targ.data)
+    X=np.ones((len(wref.data),2))
+    X[:,0]=np.array(wref.data)
+
+    [ans, resd, rnk, sng]=np.linalg.lstsq(X, y, rcond=None)
+
+    return(ans[1])
 
 
 def sif_sFLD( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
@@ -107,5 +162,26 @@ def get_local_maxima(in_spect, wl_beg, wl_end):
     return out_spect
 
 
+if __name__=="__main__":
 
+    import matplotlib.pyplot as plt
 
+    wref=Spectra(fname="./data_in/white_reference.csv",ftype="CSV",hdrLines=0)
+    test=Spectra(fname="./data_in/test_spectra.csv",ftype="CSV",hdrLines=0)
+
+    sif_opts=sif_opts_FLD_Cendrero19_O2a
+   
+   
+    print(sif_sFLD(test,wref,sif_opts=sif_opts)*0.01)
+    print(sif_3FLD(test,wref,sif_opts=sif_opts)*0.01)
+    print(sif_linReg(test,wref,sif_opts=sif_opts)*0.01)
+
+    pseudo=sif_linReg_compute_pseudo_inverse(wref, sif_opts)
+    print(sif_linReg_use_precomp_inverse(test, pseudo, sif_opts)*0.01)
+
+    #plt.plot(wref.wavl,wref.data)
+    #plt.plot(test.wavl,test.data)
+    #plt.show()
+    
+    
+    

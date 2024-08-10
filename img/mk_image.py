@@ -2,12 +2,12 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pickle
 
-with open('../data_out/sif_o2a_3FLD.pickle', 'rb') as f:
+with open('../data_out/sif_o2a_linReg.pickle', 'rb') as f:
     image = pickle.load(f)
 sif_o2a_data = np.ma.masked_where(image < -10, image)
 sif_o2a_data = sif_o2a_data[2000:,:]
 
-with open('../data_out/sif_o2b_3FLD.pickle', 'rb') as f:
+with open('../data_out/sif_o2b_linReg.pickle', 'rb') as f:
     image = pickle.load(f)
 sif_o2b_data = np.ma.masked_where(image < -10, image)
 sif_o2b_data = sif_o2b_data[2000:,:]
@@ -30,6 +30,6 @@ cbar_ax = fig.add_axes([0.15, 0.1, 0.7, 0.065])
 fig.colorbar(im, orientation="horizontal", label="SIF mW/m2/sr/um",pad=0.01, cmap=cmap, cax=cbar_ax)
 
 #plt.show()
-plt.savefig("ibis_sif_3FLD_o2a_o2b.png",bbox_inches='tight', dpi=300)
+plt.savefig("ibis_sif_linReg_o2a_o2b.png",bbox_inches='tight', dpi=300)
 
 
