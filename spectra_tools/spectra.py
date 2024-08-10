@@ -193,11 +193,34 @@ class Spectra(object):
     self.wavl=copy(wavlTmp)
     self.data=copy(dataTmp)  
    
+
   def trim(self,wlmin,wlmax):
     """Trim the spectra so it is between
     two specified wavelengths. Destroys
     the original data.
 
+    This replaces the old version and gets
+    rid of the explicit loops. It is several 
+    orders of magnitude faster.
+
+    Arguments:
+    
+    wlmin    - the lowest wavelength of the new spectra
+    wlmax    - the highest wavelength of the new spectra
+    """
+
+    idx_min=int(np.abs(self.wavl-wlmin).argmin())
+    idx_max=int(np.abs(self.wavl-wlmax).argmin())
+    self.wavl=self.wavl[idx_min:idx_max+1]
+    self.data=self.data[idx_min:idx_max+1]
+
+  def trim_old(self,wlmin,wlmax):
+    """Trim the spectra so it is between
+    two specified wavelengths. Destroys
+    the original data.
+
+    This old version is very slow. Do not use.
+   
     Arguments:
     
     wlmin    - the lowest wavelength of the new spectra
