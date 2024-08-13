@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.linalg as linalg
 from copy import copy
 from spectra_tools.spectra import Spectra
 
@@ -16,6 +17,71 @@ sif_opts_FLD_Cendrero19_O2b.outL_wband=(680, 686)
 sif_opts_FLD_Cendrero19_O2b.outR_wband=(697, 698) 
 
 
+def diff_matrix(size,order=1):
+    """returns a difference operator of the type 
+    described by Twomey in "introduction to the 
+    mathematics..." (see pages 124-127)
+    
+    size: (int) size of matrix to be returned
+    order: (int) the order of the difference matrix 
+    """
+    D=np.eye(size+order)
+    D=np.diff(D,n=order)
+    D[0:order,:]=0
+    D=D[0:size,:]
+    return D
+
+
+def sif_ridgeReg_compute_pseudo_inverse(wref_spect, order=1, gamma=1., sif_opts=sif_opts_FLD_Cendrero19_O2a):
+    """
+    
+    (KTK+gBTB)KT
+    """
+    
+    wl_min=sif_opts.in_wband[0]
+    wl_max=sif_opts.in_wband[1]
+
+    wref=copy(wref_spect)    
+    wref.trim(wl_min,wl_max)
+    
+    size=len(wref.data)
+    
+    #make the design matrix 
+    K=np.zeros((size,size*2))
+    for i in range(size):
+        K[i,i]=wref.data[i]
+        K[i,i+size]=1.0
+    KTK=np.matmul(K.T,K)
+    
+    #make the block matrix for the
+    #ridge regression constraints
+    D=diff_matrix(size,order=order)
+    B=linalg.block_diag(gamma*D,gamma*D)
+    BTB=np.matmul(B.T,B)
+    
+    return(np.matmul(np.linalg.inv(KTK+BTB),K.T))
+
+
+def sif_ridgeReg_use_precomp_inverse( target_spect, pseudo_inv,sif_opts=sif_opts_FLD_Cendrero19_O2a, out_wvl=None ):
+
+    wl_min=sif_opts.in_wband[0]
+    wl_max=sif_opts.in_wband[1]
+
+    targ=copy(target_spect)
+    targ.trim(wl_min,wl_max)
+    size=len(targ.data)
+
+    if out_wvl is None:
+        out_wvl=targ.wavl[int(size/2.)]
+
+    out=np.matmul(pseudo_inv,targ.data)
+    #copy SIF into targ
+    targ.data=out[size:]
+    
+    return(targ.closest_to_wavl(out_wvl)[1])
+
+    
+    
 def sif_linReg_compute_pseudo_inverse( wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
 
     wl_min=sif_opts.in_wband[0]
@@ -26,7 +92,7 @@ def sif_linReg_compute_pseudo_inverse( wref_spect, sif_opts=sif_opts_FLD_Cendrer
 
     X=np.ones((len(wref.data),2))
     X[:,0]=np.array(wref.data)
-
+    
     return(np.linalg.pinv(X))
 
 def sif_linReg_use_precomp_inverse( target_spect, pseudo_inv, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
@@ -171,13 +237,16 @@ if __name__=="__main__":
 
     sif_opts=sif_opts_FLD_Cendrero19_O2a
    
-   
-    print(sif_sFLD(test,wref,sif_opts=sif_opts)*0.01)
-    print(sif_3FLD(test,wref,sif_opts=sif_opts)*0.01)
-    print(sif_linReg(test,wref,sif_opts=sif_opts)*0.01)
+    if True:  
+        print(sif_sFLD(test,wref,sif_opts=sif_opts)*0.01)
+        print(sif_3FLD(test,wref,sif_opts=sif_opts)*0.01)
+        print(sif_linReg(test,wref,sif_opts=sif_opts)*0.01)
 
-    pseudo=sif_linReg_compute_pseudo_inverse(wref, sif_opts)
-    print(sif_linReg_use_precomp_inverse(test, pseudo, sif_opts)*0.01)
+        pseudo=sif_linReg_compute_pseudo_inverse(wref, sif_opts)
+        print(sif_linReg_use_precomp_inverse(test, pseudo,sif_opts)*0.01)
+
+    pseudo=sif_ridgeReg_compute_pseudo_inverse(wref, sif_opts=sif_opts, order=3, gamma=10000000.)
+    print(sif_ridgeReg_use_precomp_inverse(test, pseudo,sif_opts=sif_opts,out_wvl=761.)*0.01)
 
     #plt.plot(wref.wavl,wref.data)
     #plt.plot(test.wavl,test.data)
