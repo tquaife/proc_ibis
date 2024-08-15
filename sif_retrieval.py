@@ -33,6 +33,11 @@ def diff_matrix(size,order=1):
 
 
 def sif_ridgeReg_compute_pseudo_inverse(wref_spect, order=1, gamma=1., sif_opts=sif_opts_FLD_Cendrero19_O2a):
+    """Wrapper function to preserve previous functionality
+    """
+    return sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=order, gammaR=gamma, orderF=order, gammaF=gamma,sif_opts=sif_opts)
+
+def sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=1, gammaR=1., orderF=1, gammaF=1.,sif_opts=sif_opts_FLD_Cendrero19_O2a):
     """
     
     (KTK+gBTB)KT
@@ -55,8 +60,9 @@ def sif_ridgeReg_compute_pseudo_inverse(wref_spect, order=1, gamma=1., sif_opts=
     
     #make the block matrix for the
     #ridge regression constraints
-    D=diff_matrix(size,order=order)
-    B=linalg.block_diag(gamma*D,gamma*D)
+    DR=diff_matrix(size,order=orderR)
+    DF=diff_matrix(size,order=orderF)
+    B=linalg.block_diag(gammaF*DF,gammaR*DR)
     BTB=np.matmul(B.T,B)
     
     return(np.matmul(np.linalg.inv(KTK+BTB),K.T))
@@ -248,9 +254,9 @@ if __name__=="__main__":
     pseudo=sif_ridgeReg_compute_pseudo_inverse(wref, sif_opts=sif_opts, order=3, gamma=10000000.)
     print(sif_ridgeReg_use_precomp_inverse(test, pseudo,sif_opts=sif_opts,out_wvl=761.)*0.01)
 
-    #plt.plot(wref.wavl,wref.data)
-    #plt.plot(test.wavl,test.data)
-    #plt.show()
+    plt.plot(wref.wavl,wref.data)
+    plt.plot(test.wavl,test.data)
+    plt.show()
     
     
     

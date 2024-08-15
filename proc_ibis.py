@@ -57,13 +57,13 @@ if __name__=="__main__":
     #restrict the O2b waveband - the longer
     #wavelengths change too much (this may
     #also be overcome with the ridge regression)
-    sif_opts_FLD_Cendrero19_O2b.in_wband=(682, 690) 
+    #sif_opts_FLD_Cendrero19_O2b.in_wband=(682, 690) 
 
     #precompute pseudo inverse for regression
     #pseudo_o2a=sif_linReg_compute_pseudo_inverse(wref, sif_opts_FLD_Cendrero19_O2a)
     #pseudo_o2b=sif_linReg_compute_pseudo_inverse(wref, sif_opts_FLD_Cendrero19_O2b)
     #pseudo_o2a=sif_ridgeReg_compute_pseudo_inverse(wref, order=2, gamma=10000000., sif_opts=sif_opts_FLD_Cendrero19_O2a)
-    pseudo_o2b=sif_ridgeReg_compute_pseudo_inverse(wref, order=2, gamma=10000000., sif_opts=sif_opts_FLD_Cendrero19_O2b)
+    pseudo_o2b=sif_ridgeReg_compute_pseudo_inverse_RFopts(wref, orderR=3, gammaR=10000000.,orderF=2, gammaF=10000000., sif_opts=sif_opts_FLD_Cendrero19_O2b)
 
     #loop over the IBIS data, exploiting the
     #fact that the BilReader class creates an
