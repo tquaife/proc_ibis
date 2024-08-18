@@ -33,14 +33,28 @@ def diff_matrix(size,order=1):
 
 
 def sif_ridgeReg_compute_pseudo_inverse(wref_spect, order=1, gamma=1., sif_opts=sif_opts_FLD_Cendrero19_O2a):
-    """Wrapper function to preserve previous functionality
+    """Wrapper function for sif_ridgeReg_compute_pseudo_inverse_RFopts 
+    to preserve previous functionality. Passes a single value of order and 
+    gamma instead of separate ones for the reflectance and fluorescence.  
+    
+    Very likely to be deleted in the near future
     """
-    return sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=order, gammaR=gamma, orderF=order, gammaF=gamma,sif_opts=sif_opts)
+    return sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=order, \
+                          gammaR=gamma, orderF=order, gammaF=gamma,sif_opts=sif_opts)
+
 
 def sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=1, gammaR=1., orderF=1, gammaF=1.,sif_opts=sif_opts_FLD_Cendrero19_O2a):
-    """
+    """ Calculate the pseudo inverse for the Ridge Regression
+    problem.
     
-    (KTK+gBTB)KT
+    Returns the matrix: (K^TK+gB^TB)^{-1}K^T as a 2D numpy array
+    
+    wref_spect:   (Spectra object) the white reference spectra
+    orderR:       (int) the order of difference constraint for the reflectance 
+    gammaR:       (float) the magnitude of the reflectance constraint 
+    orderF:       (int) the order of difference constraint for the fluorescence 
+    gammaF:       (float) the magnitude of the fluorescence constraint 
+    sif_opts:     (sif_opts object) containing the wavelength ranges 
     """
     
     wl_min=sif_opts.in_wband[0]
@@ -69,6 +83,19 @@ def sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=1, gammaR=1., 
 
 
 def sif_ridgeReg_use_precomp_inverse( target_spect, pseudo_inv,sif_opts=sif_opts_FLD_Cendrero19_O2a, out_wvl=None ):
+    """ Compute the fluorescence using ridge regression. Similar in concept 
+    to iFLD in that it account for change in R and F over the window,
+    but here they are both determined in a single step. Allows for all
+    data points from an absorption feature to be used in the retrieval. 
+    
+    Returns the matrix: (K^TK+gB^TB)^{-1}K^T as a 2D numpy array
+    
+    target_spect:    (Spectra object) observed radiance from a fluorescing target 
+    pseudo_inv:      (2D numpy array) the precomputed inverse matrix
+    sif_opts:        (sif_opts object) containing the wavelength ranges
+    out_wvl:         (float, optional) the wavelength to compute the fluorescence at
+                     if None the return F in the middle of the window  
+    """
 
     wl_min=sif_opts.in_wband[0]
     wl_max=sif_opts.in_wband[1]
@@ -85,11 +112,20 @@ def sif_ridgeReg_use_precomp_inverse( target_spect, pseudo_inv,sif_opts=sif_opts
     targ.data=out[size:]
     
     return(targ.closest_to_wavl(out_wvl)[1])
-
     
     
 def sif_linReg_compute_pseudo_inverse( wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
-
+    """use linear regression to solve the equation: 
+    I_up_target=I_up_reference*(R_target/R_reference)+SIF
+    
+    This is the same as sif_linReg but uses a precomputed 
+    inverse matrix, e.g. from sif_linReg_compute_pseudo_inverse()
+    
+    Returns the matrix: (K^TK)^{-1}K^T as a 2D numpy array
+    
+    wref_spect:      (Spectra object) the white reference radiance spectra
+    sif_opts:        (sif_opts object) containing the wavelength ranges
+    """
     wl_min=sif_opts.in_wband[0]
     wl_max=sif_opts.in_wband[1]
 
@@ -101,7 +137,20 @@ def sif_linReg_compute_pseudo_inverse( wref_spect, sif_opts=sif_opts_FLD_Cendrer
     
     return(np.linalg.pinv(X))
 
+
 def sif_linReg_use_precomp_inverse( target_spect, pseudo_inv, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
+    """use linear regression to solve the equation: 
+    I_up_target=I_up_reference*(R_target/R_reference)+SIF
+    
+    This is the same as sif_linReg but uses a precomputed 
+    inverse matrix, e.g. from sif_linReg_compute_pseudo_inverse()
+    
+    returns the fluorescence (assumed uniform over the window)
+    
+    target_spect:    (Spectra object) observed radiance from a fluorescing target 
+    pseudo_inv:      (2D numpy array) the precomputed inverse matrix
+    sif_opts:        (sif_opts object) containing the wavelength ranges
+    """
 
     wl_min=sif_opts.in_wband[0]
     wl_max=sif_opts.in_wband[1]
@@ -112,6 +161,7 @@ def sif_linReg_use_precomp_inverse( target_spect, pseudo_inv, sif_opts=sif_opts_
     out=np.matmul(pseudo_inv,targ.data)
 
     return(out[1])
+
 
 def sif_linReg( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
     """use linear regression to solve the equation: 
