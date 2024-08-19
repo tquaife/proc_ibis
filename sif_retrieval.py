@@ -1,6 +1,9 @@
 import numpy as np
+
 import scipy.linalg as linalg
-from copy import copy
+import scipy.interpolate as interpolate
+
+from copy import copy, deepcopy
 from spectra_tools.spectra import Spectra
 
 class sif_opts_base: pass
@@ -344,23 +347,81 @@ def sif_iFLD_full_search(target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrer
     Eout_R_localmax_spect=get_local_maxima(wref_spect,sif_opts.outR_wband[0],sif_opts.outR_wband[1])
     Eout_L_localmax_spect=get_local_maxima(wref_spect,sif_opts.outL_wband[0],sif_opts.outL_wband[1])
 
+    Eout_LRcat_localmax_spect=concat_spectra(Eout_L_localmax_spect,Eout_R_localmax_spect)
+
     Lout_R_localmax_spect=get_local_maxima(target_spect,sif_opts.outR_wband[0],sif_opts.outR_wband[1])
     Lout_L_localmax_spect=get_local_maxima(target_spect,sif_opts.outL_wband[0],sif_opts.outL_wband[1])
+    #Lout_LRcat_localmax_spect=concat_spectra(Lout_L_localmax_spect,Lout_R_localmax_spect)
+
+    Lout_LRcat_localmax_spect=deepcopy(Eout_LRcat_localmax_spect)
+    for (n,wvl) in enumerate(Lout_LRcat_localmax_spect.wavl):
+        #out=
+        #print(out)
+        Lout_LRcat_localmax_spect.data[n]=target_spect.closest_to_wavl(wvl)[1]
 
     Eout=Eout_L_localmax_spect.data[-1]    
-    Lout=Lout_L_localmax_spect.data[-1]
+    Eout_wvl=Eout_L_localmax_spect.wavl[-1]    
 
     Ein=wref_spect.min_over_band(sif_opts.in_wband)
+    Ein_wvl=wref_spect.wavl_of_min_over_band(sif_opts.in_wband)
+
+    Lout=Lout_L_localmax_spect.data[-1]
     Lin=target_spect.min_over_band(sif_opts.in_wband)
 
-    ### wrong approach...
-    ###Rapp_spect=copy(target_spect)
-    ###Rapp_spect.data=target_spect.data/wref_spect.data 
+    #build interpolator for apparent reflectance 
+    Rapp_spect=deepcopy(Lout_LRcat_localmax_spect)
+    Rapp_spect.data/=Eout_LRcat_localmax_spect.data
+    Rapp_cs=interpolate.CubicSpline(Rapp_spect.wavl,Rapp_spect.data)
+    Rapp_us=interpolate.UnivariateSpline(Rapp_spect.wavl,Rapp_spect.data)
+
+    #fit polynomial to Rapp
+    coefsRapp=np.polyfit(Rapp_spect.wavl, Rapp_spect.data, 2)
+
+        
+    #fit polynomial to Eout
+    coefsF=np.polyfit(Eout_LRcat_localmax_spect.wavl, Eout_LRcat_localmax_spect.data, 2)
+
+
+    #plot to check E interpolation
+    #(this is looking good!)
+    if False:
+        plt.plot(wref_spect.wavl,wref_spect.data)
+        plt.plot(Eout_L_localmax_spect.wavl,Eout_L_localmax_spect.data,"o")
+        plt.plot(Eout_R_localmax_spect.wavl,Eout_R_localmax_spect.data,"o")
+        plt.plot(Eout_LRcat_localmax_spect.wavl,Eout_LRcat_localmax_spect.data,".")
+        plt.plot(wref_spect.wavl,np.polyval(coefsF,wref_spect.wavl))
+        plt.plot(Ein_wvl,np.polyval(coefs,Ein_wvl),"*")
+        plt.xlim([sif_opts.outL_wband[0],sif_opts.outR_wband[1]])
+        plt.show()
+
+   
+    #plot to check Rapp interpolation
+    #(this shows the cubic spline looking bonkers!)
+    #NOTE: DON'T USE CUBIC SPLINE - USE UNIVARIATE SPLINE
+    if False:
+        plt.xlim([sif_opts.outL_wband[0],sif_opts.outR_wband[1]])   
+        #plt.ylim([0.0,0.2])
+        plt.plot(wref_spect.wavl,target_spect.data/np.roll(wref_spect.data,0))
+        plt.plot(wref_spect.wavl,Rapp_cs(wref_spect.wavl))
+        plt.plot(wref_spect.wavl,Rapp_us(wref_spect.wavl),label="uni spline")
+        plt.plot(wref_spect.wavl,np.polyval(coefsRapp,wref_spect.wavl))
+        #plt.plot(Rapp_spect.wavl,Rapp_spect.data,"o")
+        #plt.plot(wref_spect.wavl,wref_spect.data)
+        #plt.plot(target_spect.wavl,target_spect.data)
+        plt.legend()
+        plt.show()
+
     
-    
-    
-    alpha_R=1.
-    alpha_F=1.
+    #correction terms
+    #alpha_R=Rapp_cs(Eout_wvl)/Rapp_cs(Ein_wvl)
+    alpha_R=Rapp_us(Eout_wvl)/Rapp_us(Ein_wvl)
+    #alpha_R=np.polyval(coefsRapp,Eout_wvl)/np.polyval(coefsRapp,Ein_wvl)
+    alpha_F=alpha_R*Eout/np.polyval(coefsF,Ein_wvl)
+    #alpha_R=1.
+    #alpha_F=1.
+    #print("* %f %f"%(alpha_R,alpha_F))
+    #print("* %f %f"%(Eout_wvl,Ein_wvl))
+    #print("* %f %f"%(Rapp_cs(Eout_wvl),Rapp_cs(Ein_wvl)))
 
     return (alpha_R*Eout*Lin-Ein*Lout)/(alpha_R*Eout-alpha_F*Ein)
 
@@ -373,10 +434,9 @@ def concat_spectra(spect1,spect2):
     make sure the ordering of the wavelengths is correct.
     This is left to the user.
     """
-    out=copy(spect1)
-    out.data=np.concatenate(spect1.data,spect2.data)
-    out.wavl=np.concatenate(spect1.wavl,spect2.wavl)
-    
+    out=deepcopy(spect1)
+    out.data=np.concatenate([spect1.data,spect2.data])
+    out.wavl=np.concatenate([spect1.wavl,spect2.wavl])
     return out
 
 
@@ -432,22 +492,24 @@ if __name__=="__main__":
     wref=Spectra(fname="./data_in/white_reference.csv",ftype="CSV",hdrLines=0)
     test=Spectra(fname="./data_in/test_spectra.csv",ftype="CSV",hdrLines=0)
 
-    sif_opts=sif_opts_FLD_Cendrero19_O2a
+    sif_opts=sif_opts_FLD_Cendrero19_O2b
    
     if True:  
-        print(sif_sFLD(test,wref,sif_opts=sif_opts)*0.01)
-        print(sif_3FLD(test,wref,sif_opts=sif_opts)*0.01)
+        print(sif_sFLD_full_search(test,wref,sif_opts=sif_opts)*0.01)
+        print(sif_3FLD_full_search(test,wref,sif_opts=sif_opts)*0.01)
         print(sif_linReg(test,wref,sif_opts=sif_opts)*0.01)
 
         pseudo=sif_linReg_compute_pseudo_inverse(wref, sif_opts)
         print(sif_linReg_use_precomp_inverse(test, pseudo,sif_opts)*0.01)
 
-    pseudo=sif_ridgeReg_compute_pseudo_inverse(wref, sif_opts=sif_opts, order=3, gamma=10000000.)
-    print(sif_ridgeReg_use_precomp_inverse(test, pseudo,sif_opts=sif_opts,out_wvl=761.)*0.01)
+        pseudo=sif_ridgeReg_compute_pseudo_inverse(wref, sif_opts=sif_opts, order=3, gamma=10000000.)
+        print(sif_ridgeReg_use_precomp_inverse(test, pseudo,sif_opts=sif_opts,out_wvl=761.)*0.01)
 
-    plt.plot(wref.wavl,wref.data)
-    plt.plot(test.wavl,test.data)
-    plt.show()
+    print(sif_iFLD_full_search(test,wref,sif_opts=sif_opts)*0.01)
+
+    #plt.plot(wref.wavl,wref.data)
+    #plt.plot(test.wavl,test.data)
+    #plt.show()
     
     
     
