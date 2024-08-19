@@ -151,6 +151,13 @@ class Spectra(object):
       idx = int(np.abs(self.wavl-wvl).argmin())
       return (self.wavl[idx],self.data[idx])
                   
+
+  def closest_to_wavl_idx(self, wvl):
+      """Gets the array index that is 
+      closest to the wavelength specified in wvl 
+      """
+      return int(np.abs(self.wavl-wvl).argmin())
+
             
   def interpolate(self,resltn=0.1):
     """Interpolate spectra to the given resolution.

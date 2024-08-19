@@ -5,7 +5,7 @@ from spectra_tools.spectra import Spectra
 
 class sif_opts_base: pass
 
-# Band definitions from Pilar et al. (2019) 
+# Band definitions from Cendrero et al. (2019) 
 # https://doi.org/10.3390/rs11080962
 sif_opts_FLD_Cendrero19_O2a=sif_opts_base()
 sif_opts_FLD_Cendrero19_O2a.in_wband=(759, 770) 
@@ -56,7 +56,6 @@ def sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=1, gammaR=1., 
     gammaF:       (float) the magnitude of the fluorescence constraint 
     sif_opts:     (sif_opts object) containing the wavelength ranges 
     """
-    
     wl_min=sif_opts.in_wband[0]
     wl_max=sif_opts.in_wband[1]
 
@@ -96,7 +95,6 @@ def sif_ridgeReg_use_precomp_inverse( target_spect, pseudo_inv,sif_opts=sif_opts
     out_wvl:         (float, optional) the wavelength to compute the fluorescence at
                      if None the return F in the middle of the window  
     """
-
     wl_min=sif_opts.in_wband[0]
     wl_max=sif_opts.in_wband[1]
 
@@ -151,7 +149,6 @@ def sif_linReg_use_precomp_inverse( target_spect, pseudo_inv, sif_opts=sif_opts_
     pseudo_inv:      (2D numpy array) the precomputed inverse matrix
     sif_opts:        (sif_opts object) containing the wavelength ranges
     """
-
     wl_min=sif_opts.in_wband[0]
     wl_max=sif_opts.in_wband[1]
 
@@ -172,9 +169,6 @@ def sif_linReg( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a )
     inverse could be pre-computed for circumstances where the reference spectra
     is static (for example a flight campaign).
     """
-    #wl_min=sif_opts.outL_wband[0]
-    #wl_max=sif_opts.outR_wband[1]
-
     wl_min=sif_opts.in_wband[0]
     wl_max=sif_opts.in_wband[1]
 
@@ -192,9 +186,98 @@ def sif_linReg( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a )
     return(ans[1])
 
 
-def sif_sFLD( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
+def get_FLD_wavls_and_idx( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
+    """Get the wavelengths for FLD calculations. This allows them to be 
+    precomputed which, for some use cases, will save a lot of processing 
+    time. May not be suitable for all applications though - if in doubt 
+    use the "full search" FLD functions or the ridge regression.
+
+    target_spect:    (Spectra object) observed radiance from a fluorescing target 
+    wref_spect:      (Spectra object) the white reference radiance spectra
+    sif_opts:        (sif_opts object) containing the wavelength ranges
+
+    returns:         (sif_opts object) modified to include the wavelengths
+                     and array indices of relevant points on the spectrum
+                     
+    note: the sif_opts object is actually modified in place, so it is not
+    necessary to return it. However, imho, it makes for more readable code 
+    in the Python function that calls this.
+    """
+
+    #Ein
+    sif_opts.Ein_wvl=wref_spect.wavl_of_min_over_band(sif_opts.in_wband)
+    sif_opts.Ein_idx=wref_spect.closest_to_wavl_idx(sif_opts.Ein_wvl)
+    
+    #Eout_L
+    tmp_spect=get_local_maxima(wref_spect,sif_opts.outL_wband[0],sif_opts.outL_wband[1])    
+    sif_opts.Eout_L_wvl=tmp_spect.wavl[-1]
+    sif_opts.Eout_L_idx=wref_spect.closest_to_wavl_idx(sif_opts.Eout_L_wvl)
+    
+    #Eout_R
+    tmp_spect=get_local_maxima(wref_spect,sif_opts.outR_wband[0],sif_opts.outR_wband[1])    
+    sif_opts.Eout_R_wvl=tmp_spect.wavl[0]
+    sif_opts.Eout_R_idx=wref_spect.closest_to_wavl_idx(sif_opts.Eout_R_wvl)
+    
+    #Lin
+    sif_opts.Lin_wvl=target_spect.wavl_of_min_over_band(sif_opts.in_wband)
+    sif_opts.Lin_idx=target_spect.closest_to_wavl_idx(sif_opts.Lin_wvl)
+
+    #Lout_L
+    tmp_spect=get_local_maxima(target_spect,sif_opts.outL_wband[0],sif_opts.outL_wband[1])    
+    sif_opts.Lout_L_wvl=tmp_spect.data[-1]
+    sif_opts.Lout_L_idx=wref_spect.closest_to_wavl_idx(sif_opts.Lout_L_wvl)
+
+    #Lout_R
+    tmp_spect=get_local_maxima(target_spect,sif_opts.outR_wband[0],sif_opts.outR_wband[1])    
+    sif_opts.Lout_R_wvl=tmp_spect.data[0]    
+    sif_opts.Lout_R_idx=wref_spect.closest_to_wavl_idx(sif_opts.Lout_R_wvl)
+
+    return sif_opts
+
+
+def sif_sFLD_use_predetermined_idx( target_spect, wref_spect, sif_opts ):
     """calculate SIF using the sFLD method defined in 
     Cendrero-Mateo et al. (2019) https://doi.org/10.3390/rs11080962
+
+    The sif_opts object must contain the indices of the data needed 
+    to calculate the FLD. e.g. by calling get_FLD_wavelengths()
+    """
+    Eout=wref_spect.data[sif_opts.Eout_L_idx]    
+    Lout=target_spect.data[sif_opts.Lout_L_idx]    
+    Ein=wref_spect.data[sif_opts.Ein_idx]
+    Lin=target_spect.data[sif_opts.Lin_idx] 
+
+    return (Eout*Lin-Ein*Lout)/(Eout-Ein)
+
+
+def sif_3FLD_use_predetermined_idx( target_spect, wref_spect, sif_opts ):
+    """calculate SIF using the 3FLD method defined in 
+    Damm et al. (2011) https://doi.org/10.1016/j.rse.2011.03.011
+
+    The sif_opt objects must contain the indices of the data needed 
+    to calculate the FLD. e.g. by calling get_FLD_wavelengths()
+    """
+    Eout_L=wref_spect.data[sif_opts.Eout_L_idx]    
+    Lout_L=target_spect.data[sif_opts.Lout_L_idx]    
+    Eout_R=wref_spect.data[sif_opts.Eout_R_idx]    
+    Lout_R=target_spect.data[sif_opts.Lout_R_idx]    
+    Ein=wref_spect.data[sif_opts.Ein_idx]
+    Lin=target_spect.data[sif_opts.Lin_idx] 
+
+    w21=(sif_opts.Eout_R_wvl-sif_opts.Lin_wvl)/(sif_opts.Eout_R_wvl-sif_opts.Eout_L_wvl)
+    w22=(sif_opts.Lin_wvl-sif_opts.Eout_L_wvl)/(sif_opts.Eout_R_wvl-sif_opts.Eout_L_wvl)
+    Ecorr=Ein/(w21*Eout_L+w22*Eout_R)
+
+    return (Lin-Ecorr*(w21*Lout_L+w22*Lout_R))/(1-Ecorr)
+
+
+def sif_sFLD_full_search( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
+    """calculate SIF using the sFLD method defined in 
+    Cendrero-Mateo et al. (2019) https://doi.org/10.3390/rs11080962
+
+    The "full_search" version finds the wavelengths one which to 
+    perform the calculations itself. If processing large amounts 
+    of data this can slow down the calculation significantly.
     """
     #get the L and E at the local maxima (in E) that
     #is closest to the absorption feature    
@@ -213,23 +296,31 @@ def sif_sFLD( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
     return (Eout*Lin-Ein*Lout)/(Eout-Ein)
 
 
-def sif_3FLD( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a  ):
+def sif_3FLD_full_search( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
     """calculate SIF using the 3FLD method defined in 
     Damm et al. (2011) https://doi.org/10.1016/j.rse.2011.03.011
+    
+    The "full_search" version finds the wavelengths one which to 
+    perform the calculations itself. If processing large amounts 
+    of data this can slow down the calculation significantly.
     """
 
     Ein=wref_spect.min_over_band(sif_opts.in_wband)
+
     tmp_spect=get_local_maxima(wref_spect,sif_opts.outL_wband[0],sif_opts.outL_wband[1])    
     Eout_L=tmp_spect.data[-1]
     Eout_L_wvl=tmp_spect.wavl[-1]
+
     tmp_spect=get_local_maxima(wref_spect,sif_opts.outR_wband[0],sif_opts.outR_wband[1])    
     Eout_R=tmp_spect.data[0]
     Eout_R_wvl=tmp_spect.wavl[0]
     
     Lin=target_spect.min_over_band(sif_opts.in_wband)
     Lin_wvl=target_spect.wavl_of_min_over_band(sif_opts.in_wband)
+
     tmp_spect=get_local_maxima(target_spect,sif_opts.outL_wband[0],sif_opts.outL_wband[1])    
     Lout_L=tmp_spect.data[-1]
+
     tmp_spect=get_local_maxima(target_spect,sif_opts.outR_wband[0],sif_opts.outR_wband[1])    
     Lout_R=tmp_spect.data[0]    
 
@@ -238,6 +329,55 @@ def sif_3FLD( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a  ):
     Ecorr=Ein/(w21*Eout_L+w22*Eout_R)
 
     return (Lin-Ecorr*(w21*Lout_L+w22*Lout_R))/(1-Ecorr)
+
+
+def sif_iFLD_full_search(target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a):
+    """calculate SIF using the iFLD method defined in 
+    Cendrero-Mateo et al. (2019) https://doi.org/10.3390/rs11080962
+    Alonso et al. (2008) https://doi.org/10.1109/LGRS.2008.2001180
+
+    The "full_search" version finds the wavelengths one which to 
+    perform the calculations itself. If processing large amounts 
+    of data this can slow down the calculation significantly.
+    """
+
+    Eout_R_localmax_spect=get_local_maxima(wref_spect,sif_opts.outR_wband[0],sif_opts.outR_wband[1])
+    Eout_L_localmax_spect=get_local_maxima(wref_spect,sif_opts.outL_wband[0],sif_opts.outL_wband[1])
+
+    Lout_R_localmax_spect=get_local_maxima(target_spect,sif_opts.outR_wband[0],sif_opts.outR_wband[1])
+    Lout_L_localmax_spect=get_local_maxima(target_spect,sif_opts.outL_wband[0],sif_opts.outL_wband[1])
+
+    Eout=Eout_L_localmax_spect.data[-1]    
+    Lout=Lout_L_localmax_spect.data[-1]
+
+    Ein=wref_spect.min_over_band(sif_opts.in_wband)
+    Lin=target_spect.min_over_band(sif_opts.in_wband)
+
+    ### wrong approach...
+    ###Rapp_spect=copy(target_spect)
+    ###Rapp_spect.data=target_spect.data/wref_spect.data 
+    
+    
+    
+    alpha_R=1.
+    alpha_F=1.
+
+    return (alpha_R*Eout*Lin-Ein*Lout)/(alpha_R*Eout-alpha_F*Ein)
+
+
+def concat_spectra(spect1,spect2):
+    """concatenate two spectra objects and returns
+    a new spectra object.
+    
+    note: for speed purposes, no checking is done to 
+    make sure the ordering of the wavelengths is correct.
+    This is left to the user.
+    """
+    out=copy(spect1)
+    out.data=np.concatenate(spect1.data,spect2.data)
+    out.wavl=np.concatenate(spect1.wavl,spect2.wavl)
+    
+    return out
 
 
 def get_local_minima(in_spect, wl_beg, wl_end):
@@ -259,6 +399,7 @@ def get_local_minima(in_spect, wl_beg, wl_end):
     
     in_spect.data*=-1
     return out_spect
+
 
 def get_local_maxima(in_spect, wl_beg, wl_end):
     """return a Spectra object that only contains
