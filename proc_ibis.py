@@ -38,6 +38,8 @@ def ibis_ndvi( ibis_spect, wref, red_wband=(670, 680), nir_wband=(770, 780)):
 
 if __name__=="__main__":
 
+    import matplotlib.pyplot as plt
+
     #create ibis data object
     ibis_filename="./data_in/i200073b_mapped_utm30n.bil"
     ibis_data=ibisBilReader(ibis_filename)
@@ -57,13 +59,17 @@ if __name__=="__main__":
     #restrict the O2b waveband - the longer
     #wavelengths change too much (this may
     #also be overcome with the ridge regression)
-    #sif_opts_FLD_Cendrero19_O2b.in_wband=(682, 690) 
+    #sif_opts_FLD_Cendrero19_O2b.in_wband=(686, 697) 
+    #sif_opts_FLD_Cendrero19_O2b.outL_wband=(680, 686)  
+    sif_opts_FLD_Cendrero19_O2b.outL_wband=(680, 686)  
+    #sif_opts_FLD_Cendrero19_O2b.outR_wband=(697, 698) 
+    sif_opts_FLD_Cendrero19_O2b.outR_wband=(697.5, 700) 
 
     #precompute pseudo inverse for regression
     #pseudo_o2a=sif_linReg_compute_pseudo_inverse(wref, sif_opts_FLD_Cendrero19_O2a)
     #pseudo_o2b=sif_linReg_compute_pseudo_inverse(wref, sif_opts_FLD_Cendrero19_O2b)
     #pseudo_o2a=sif_ridgeReg_compute_pseudo_inverse(wref, order=2, gamma=10000000., sif_opts=sif_opts_FLD_Cendrero19_O2a)
-    #pseudo_o2b=sif_ridgeReg_compute_pseudo_inverse_RFopts(wref, orderR=3, gammaR=10000000.,orderF=2, gammaF=10000000., sif_opts=sif_opts_FLD_Cendrero19_O2b)
+    pseudo_o2b=sif_ridgeReg_compute_pseudo_inverse_RFopts(wref, orderR=3, gammaR=10000000.,orderF=2, gammaF=10000000., sif_opts=sif_opts_FLD_Cendrero19_O2b)
     
     #precompute wavelengths and indices of points on
     #the spectrum required to do FLD calculations
@@ -76,8 +82,8 @@ if __name__=="__main__":
     #iterable object
     for (i,line) in enumerate(ibis_data):
         print(i,end=" ",flush=True)
-        if i>500:
-            break
+        #if i>100:
+        #    break
         for j in range(ibis_data.samples):
             ibis_spect.data=copy(line[:,j])
             if not ibis_spect.data.any():
@@ -96,25 +102,30 @@ if __name__=="__main__":
             #output_sif_o2b[i,j]=sif_ridgeReg_use_precomp_inverse(ibis_spect, pseudo_o2b, sif_opts=sif_opts_FLD_Cendrero19_O2b,out_wvl=686.7)
         
             #sFLD: =======================================
-            #output_sif_o2a[i,j]=sif_sFLD_full_search(ibis_spect, wref, sif_opts_O2a)
-            #output_sif_o2b[i,j]=sif_sFLD_full_search(ibis_spect, wref, sif_opts_O2b)
+            #output_sif_o2a[i,j]=sif_sFLD_full_search(ibis_spect, wref, sif_opts=sif_opts_FLD_Cendrero19_O2a)
+            #output_sif_o2b[i,j]=sif_sFLD_full_search(ibis_spect, wref, sif_opts=sif_opts_FLD_Cendrero19_O2b)
             #output_sif_o2a[i,j]=sif_sFLD_use_predetermined_idx(ibis_spect, wref, sif_opts_O2a)
             #output_sif_o2b[i,j]=sif_sFLD_use_predetermined_idx(ibis_spect, wref, sif_opts_O2b)
 
             #3FLD: =======================================
             #output_sif_o2a[i,j]=sif_3FLD_use_predetermined_idx(ibis_spect, wref, sif_opts_O2a)
             #output_sif_o2b[i,j]=sif_3FLD_use_predetermined_idx(ibis_spect, wref, sif_opts_O2b)
-            #output_sif_o2a[i,j]=sif_3FLD_full_search(ibis_spect, wref, sif_opts_O2a)
-            #output_sif_o2b[i,j]=sif_3FLD_full_search(ibis_spect, wref, sif_opts_O2b)
+            #output_sif_o2a[i,j]=sif_3FLD_full_search(ibis_spect, wref, sif_opts=sif_opts_FLD_Cendrero19_O2a)
+            #output_sif_o2b[i,j]=sif_3FLD_full_search(ibis_spect, wref, sif_opts=sif_opts_FLD_Cendrero19_O2b)
 
             #iFLD: =======================================
-            output_sif_o2a[i,j]=sif_iFLD_full_search(ibis_spect, wref, sif_opts=sif_opts_FLD_Cendrero19_O2a)
+            #output_sif_o2a[i,j]=sif_iFLD_full_search(ibis_spect, wref, sif_opts=sif_opts_FLD_Cendrero19_O2a)
             output_sif_o2b[i,j]=sif_iFLD_full_search(ibis_spect, wref, sif_opts=sif_opts_FLD_Cendrero19_O2b)
 
     
     #convert units
     output_sif_o2a*=ibis_data.units_to_mw_m2
     output_sif_o2b*=ibis_data.units_to_mw_m2
+
+    #plt.imshow(np.rot90(output_sif_o2b[:400,:]),cmap="pink",vmin=-0.3,vmax=2.5)
+    #plt.show()
+    
+
 
     #with open('./data_out/sif_o2a_ridgeReg.pickle', 'wb') as f:
     #    pickle.dump(output_sif_o2a, f, pickle.HIGHEST_PROTOCOL)
@@ -135,14 +146,19 @@ if __name__=="__main__":
     #    pickle.dump(output_sif_o2a, f, pickle.HIGHEST_PROTOCOL)
     #with open('./data_out/sif_o2b_3FLD.pickle', 'wb') as f:
     #    pickle.dump(output_sif_o2b, f, pickle.HIGHEST_PROTOCOL)
+
+    #with open('./data_out/sif_o2a_sFLD.pickle', 'wb') as f:
+    #    pickle.dump(output_sif_o2a, f, pickle.HIGHEST_PROTOCOL)
+    #with open('./data_out/sif_o2b_sFLD.pickle', 'wb') as f:
+    #    pickle.dump(output_sif_o2b, f, pickle.HIGHEST_PROTOCOL)
     
     #with open('./data_out/sif_o2a_sFLD_fast.pickle', 'wb') as f:
     #    pickle.dump(output_sif_o2a, f, pickle.HIGHEST_PROTOCOL)
     #with open('./data_out/sif_o2b_sFLD_fast.pickle', 'wb') as f:
     #    pickle.dump(output_sif_o2b, f, pickle.HIGHEST_PROTOCOL)
 
-    with open('./data_out/sif_o2a_iFLD.pickle', 'wb') as f:
-        pickle.dump(output_sif_o2a, f, pickle.HIGHEST_PROTOCOL)
+    #with open('./data_out/sif_o2a_iFLD.pickle', 'wb') as f:
+    #    pickle.dump(output_sif_o2a, f, pickle.HIGHEST_PROTOCOL)
     with open('./data_out/sif_o2b_iFLD.pickle', 'wb') as f:
         pickle.dump(output_sif_o2b, f, pickle.HIGHEST_PROTOCOL)
 
