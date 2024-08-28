@@ -52,10 +52,10 @@ if __name__=="__main__":
     proc_list=[]
     #proc_list.append("sFLD_fast")
     proc_list.append("sFLD")
+    proc_list.append("rFLD")
     #proc_list.append("iFLD")
     #proc_list.append("3FLD_fast")
     #proc_list.append("3FLD")
-    #proc_list.append("ridgeReg")
     #proc_list.append("linReg")
     
     for name in proc_list:
