@@ -29,7 +29,7 @@ def mk_img(name):
     axes[0].axis("off")
     divider = make_axes_locatable(axes[0])
     cax = divider.append_axes('bottom', size='10%', pad=0.05)
-    fig.colorbar(im0, cax=cax, orientation="horizontal", label="O2b SIF mW/m2/sr/um",pad=0.01, cmap=cmap)
+    fig.colorbar(im0, cax=cax, orientation="horizontal", label="O2b SIF mW/m2/sr/nm",pad=0.01, cmap=cmap)
 
     #O2A ========================
     vmin=-0.4
@@ -40,7 +40,7 @@ def mk_img(name):
     fig.subplots_adjust(wspace=0, hspace=-0.4)
     divider = make_axes_locatable(axes[1])
     cax = divider.append_axes('bottom', size='10%', pad=0.05)
-    fig.colorbar(im1, cax=cax, orientation="horizontal", label="O2a SIF mW/m2/sr/um",pad=0.01, cmap=cmap)
+    fig.colorbar(im1, cax=cax, orientation="horizontal", label="O2a SIF mW/m2/sr/nm",pad=0.01, cmap=cmap)
 
     #save figure:
     fig.tight_layout()
@@ -53,9 +53,10 @@ if __name__=="__main__":
     #proc_list.append("sFLD_fast")
     proc_list.append("sFLD")
     proc_list.append("rFLD")
-    #proc_list.append("iFLD")
+    proc_list.append("rFLD_32")
+    proc_list.append("iFLD")
     #proc_list.append("3FLD_fast")
-    #proc_list.append("3FLD")
+    proc_list.append("3FLD")
     #proc_list.append("linReg")
     
     for name in proc_list:

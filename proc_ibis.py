@@ -155,32 +155,32 @@ if __name__=="__main__":
     #sFLD O2a
     out_fn='./data_out/sif_o2a_sFLD.pickle'
     sif_opts=sif_opts_FLD_Cendrero19_O2a
-    ibis_sif_genericFLD(sif_sFLD_full_search,wref,ibis_data,sif_opts,out_fn) 
+    #ibis_sif_genericFLD(sif_sFLD_full_search,wref,ibis_data,sif_opts,out_fn) 
 
     #sFLD O2b
     out_fn='./data_out/sif_o2b_sFLD.pickle'
     sif_opts=sif_opts_FLD_Cendrero19_O2b
-    ibis_sif_genericFLD(sif_sFLD_full_search,wref,ibis_data,sif_opts,out_fn) 
+    #ibis_sif_genericFLD(sif_sFLD_full_search,wref,ibis_data,sif_opts,out_fn) 
 
     #3FLD O2a
     out_fn='./data_out/sif_o2a_3FLD.pickle'
     sif_opts=sif_opts_FLD_Cendrero19_O2a
-    ibis_sif_genericFLD(sif_3FLD_full_search,wref,ibis_data,sif_opts,out_fn) 
+    #ibis_sif_genericFLD(sif_3FLD_full_search,wref,ibis_data,sif_opts,out_fn) 
 
     #3FLD O2b
     out_fn='./data_out/sif_o2b_3FLD.pickle'
     sif_opts=sif_opts_FLD_Cendrero19_O2b
-    ibis_sif_genericFLD(sif_3FLD_full_search,wref,ibis_data,sif_opts,out_fn) 
+    #ibis_sif_genericFLD(sif_3FLD_full_search,wref,ibis_data,sif_opts,out_fn) 
 
     #iFLD O2a
     out_fn='./data_out/sif_o2a_iFLD.pickle'
     sif_opts=sif_opts_FLD_Cendrero19_O2a
-    ibis_sif_genericFLD(sif_iFLD_full_search,wref,ibis_data,sif_opts,out_fn) 
+    #ibis_sif_genericFLD(sif_iFLD_full_search,wref,ibis_data,sif_opts,out_fn) 
 
     #iFLD O2b
     out_fn='./data_out/sif_o2b_iFLD.pickle'
     sif_opts=sif_opts_FLD_Cendrero19_O2b
-    ibis_sif_genericFLD(sif_iFLD_full_search,wref,ibis_data,sif_opts,out_fn) 
+    #ibis_sif_genericFLD(sif_iFLD_full_search,wref,ibis_data,sif_opts,out_fn) 
 
     #The following are examples of applying the "fast" version
     #of the sFLD (a similar function exists for 3FLD). They do not 

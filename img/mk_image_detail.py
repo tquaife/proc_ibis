@@ -62,7 +62,7 @@ def mk_img(band):
     fig.subplots_adjust(bottom=0.2)
     #fig.tight_layout()
     cbar_ax = fig.add_axes([0.15, 0.1, 0.7, 0.065])
-    fig.colorbar(im, orientation="horizontal", label="SIF mW/m2/sr/um",pad=0.01, cmap=cmap, cax=cbar_ax)
+    fig.colorbar(im, orientation="horizontal", label="SIF mW/m2/sr/nm",pad=0.01, cmap=cmap, cax=cbar_ax)
     
     #plt.show()
     plt.savefig("ibis_sif_detail_%s.png"%band,bbox_inches='tight', dpi=300)
