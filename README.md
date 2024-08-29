@@ -16,7 +16,7 @@ wref=Spectra(fname="./data_in/white_reference.csv",ftype="CSV",hdrLines=0)
 #rFLD O2a
 out_fn='./data_out/sif_o2a_rFLD.pickle'
 sif_opts=sif_opts_FLD_Cendrero19_O2a
-ibis_sif_sFLD(wref,ibis_data,2,10E6,2,10E6,sif_opts,out_fn,761.0) 
+ibis_sif_rFLD(wref,ibis_data,2,10E6,2,10E6,sif_opts,out_fn,761.0) 
 ```
 
 ![Example SIF retrieval](img/ibis_sif_rFLD_o2a_o2b.png)
