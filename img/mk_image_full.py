@@ -22,8 +22,8 @@ def mk_img(name):
     fig, axes = plt.subplots(nrows=2, ncols=1)
 
     #O2B ========================
-    vmin=-0.2
-    vmax=1.5
+    vmin=-0.5
+    vmax=5.0
     #vmax=3.5
     im0=axes[0].imshow(np.rot90(sif_o2b_data), vmin=vmin, vmax=vmax, cmap=cmap)
     axes[0].axis("off")
@@ -32,8 +32,8 @@ def mk_img(name):
     fig.colorbar(im0, cax=cax, orientation="horizontal", label="O2b SIF mW/m2/sr/nm",pad=0.01, cmap=cmap)
 
     #O2A ========================
-    vmin=-0.4
-    vmax=2.0
+    vmin=-0.5
+    vmax=3.0
     #vmax=4.0
     im1=axes[1].imshow(np.rot90(sif_o2a_data), vmin=vmin, vmax=vmax, cmap=cmap)
     axes[1].axis("off")
@@ -44,19 +44,20 @@ def mk_img(name):
 
     #save figure:
     fig.tight_layout()
-    plt.savefig("ibis_sif_%s_o2a_o2b.png"%name,bbox_inches='tight', dpi=300)
+    plt.savefig("ibis_sif_%s_o2a_o2b.png"%name,bbox_inches='tight', dpi=600)
 
 
 if __name__=="__main__":
 
     proc_list=[]
     #proc_list.append("sFLD_fast")
-    proc_list.append("sFLD")
+    #proc_list.append("sFLD")
     proc_list.append("rFLD")
-    proc_list.append("rFLD_32")
-    proc_list.append("iFLD")
+    #proc_list.append("rFLD_32")
+    #proc_list.append("rFLD_custom")
+    #proc_list.append("iFLD")
     #proc_list.append("3FLD_fast")
-    proc_list.append("3FLD")
+    #proc_list.append("3FLD")
     #proc_list.append("linReg")
     
     for name in proc_list:

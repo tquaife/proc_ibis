@@ -9,13 +9,19 @@ if __name__=="__main__":
     #read in reference data
     wref=Spectra(fname="./data_in/white_reference.csv",ftype="CSV",hdrLines=0)
 
-    #rFLD O2a
-    out_fn='./data_out/sif_o2a_rFLD_32.pickle'
-    sif_opts=sif_opts_FLD_Cendrero19_O2a
+    #rFLD O2a - custom waveband range:
+    out_fn='./data_out/sif_o2a_rFLD_custom.pickle'
+    sif_opts=sif_opts_rFLD_custom_O2a
     ibis_sif_rFLD(wref,ibis_data,3,10E6,2,10E6,sif_opts,out_fn,761.0) 
+    
+
+    #rFLD O2a
+    #out_fn='./data_out/sif_o2a_rFLD_32.pickle'
+    #sif_opts=sif_opts_FLD_Cendrero19_O2a
+    #ibis_sif_rFLD(wref,ibis_data,3,10E6,2,10E6,sif_opts,out_fn,761.0) 
 
     #rFLD O2b
-    out_fn='./data_out/sif_o2b_rFLD_32.pickle'
-    sif_opts=sif_opts_FLD_Cendrero19_O2b
-    ibis_sif_rFLD(wref,ibis_data,3,10E6,2,10E6,sif_opts,out_fn,686.7) 
+    #out_fn='./data_out/sif_o2b_rFLD_32.pickle'
+    #sif_opts=sif_opts_FLD_Cendrero19_O2b
+    #ibis_sif_rFLD(wref,ibis_data,3,10E6,2,10E6,sif_opts,out_fn,686.7) 
 

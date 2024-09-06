@@ -19,6 +19,8 @@ sif_opts_FLD_Cendrero19_O2b.in_wband=(686, 697)
 sif_opts_FLD_Cendrero19_O2b.outL_wband=(680, 686)  
 sif_opts_FLD_Cendrero19_O2b.outR_wband=(697, 698) 
 
+sif_opts_rFLD_custom_O2a=sif_opts_base()
+sif_opts_rFLD_custom_O2a.in_wband=(759.5, 765) 
 
 def diff_matrix(size,order=1):
     """returns a difference operator of the type 
@@ -78,7 +80,7 @@ def sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=1, gammaR=1., 
     #ridge regression constraints
     DR=diff_matrix(size,order=orderR)
     DF=diff_matrix(size,order=orderF)
-    B=linalg.block_diag(gammaF*DF,gammaR*DR)
+    B=linalg.block_diag(gammaR*DR,gammaF*DF)
     BTB=np.matmul(B.T,B)
     
     return(np.matmul(np.linalg.inv(KTK+BTB),K.T))
