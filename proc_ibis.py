@@ -1,5 +1,5 @@
 import pickle
-from copy import copy
+from copy import copy, deepcopy
 import numpy as np
 
 from arsf_envi_reader import envi_header as envhdr
@@ -27,6 +27,15 @@ class ibisBilReader(BilReader):
         #to mW/m2/sr/nm
         self.units_to_mw_m2=0.01    
 
+    
+    def get_pixel(self, sample_number, line_number):
+        """return a Spectra object containing the
+        data from a single pixel 
+        """
+        spect=Spectra()
+        spect.wavl=deepcopy(self.wavelength)
+        spect.data=self.read_pixel(sample_number, line_number)
+        return(spect)
     
 def ibis_iterator(ibis_data,verbose=True):
     """loop across an ibisBilReader object and
@@ -83,7 +92,8 @@ def ibis_sif_rFLD(wref,ibis_data,diffR,gR,diffF,gF,sif_opts,out_fn,out_wvl):
 
     #loop over image data
     for (i,j,ibis_spect) in ibis_iterator(ibis_data):
-        output_sif[i,j]=sif_ridgeReg_use_precomp_inverse(ibis_spect,\
+        if i>2700:
+            output_sif[i,j]=sif_ridgeReg_use_precomp_inverse(ibis_spect,\
                 pseudo, sif_opts=sif_opts,out_wvl=out_wvl)
 
     #convert units
@@ -92,6 +102,37 @@ def ibis_sif_rFLD(wref,ibis_data,diffR,gR,diffF,gF,sif_opts,out_fn,out_wvl):
     #write data
     with open(out_fn, 'wb') as f:
         pickle.dump(output_sif, f, pickle.HIGHEST_PROTOCOL)
+
+
+
+def ibis_sif_linearFLD(wref,ibis_data,sif_opts,out_fn):
+    """Apply the linear FLD method to an IBIS image. Writes the results to a pickle.
+    
+    wref:       (Spectra object) the reference spectrum
+    ibis_data:  (ibisBilReader object) the ibis data
+    sif_opts:   (sif_opts object) containing the wavelength ranges
+    out_fn:     (string) the name of the file to write
+    
+    Returns:    None
+    """ 
+ 
+    #blank array to hold output data
+    output_sif=np.ones([ibis_data.lines,ibis_data.samples])*-9999
+
+    #precompute pseudo inverse for regression
+    pseudo=sif_linReg_compute_pseudo_inverse(wref, sif_opts)
+
+    #loop over image data
+    for (i,j,ibis_spect) in ibis_iterator(ibis_data):
+        output_sif[i,j]=sif_linReg_use_precomp_inverse(ibis_spect, pseudo, sif_opts)
+
+    #convert units
+    output_sif*=ibis_data.units_to_mw_m2
+
+    #write data
+    with open(out_fn, 'wb') as f:
+        pickle.dump(output_sif, f, pickle.HIGHEST_PROTOCOL)
+
 
 
 def ibis_sif_genericFLD(fld_func,wref,ibis_data,sif_opts,out_fn): 
@@ -145,12 +186,12 @@ if __name__=="__main__":
     #rFLD O2a
     out_fn='./data_out/sif_o2a_rFLD.pickle'
     sif_opts=sif_opts_FLD_Cendrero19_O2a
-    #ibis_sif_rFLD(wref,ibis_data,3,0.0001,2,1000,sif_opts,out_fn,761.0) 
+    ibis_sif_rFLD(wref,ibis_data,3,0.0001,2,1000,sif_opts,out_fn,761.0) 
 
     #rFLD O2b
     out_fn='./data_out/sif_o2b_rFLD.pickle'
     sif_opts=sif_opts_FLD_Cendrero19_O2b
-    #ibis_sif_rFLD(wref,ibis_data,2,0.001,2,1000,sif_opts,out_fn,686.7) 
+    ibis_sif_rFLD(wref,ibis_data,2,0.001,2,1000,sif_opts,out_fn,686.7) 
 
     #sFLD O2a
     out_fn='./data_out/sif_o2a_sFLD.pickle'

@@ -23,8 +23,8 @@ def mk_img(name):
 
     #O2B ========================
     vmin=-0.5
-    vmax=5.0
-    #vmax=3.5
+    #vmax=5.0
+    vmax=3.5
     im0=axes[0].imshow(np.rot90(sif_o2b_data), vmin=vmin, vmax=vmax, cmap=cmap)
     axes[0].axis("off")
     divider = make_axes_locatable(axes[0])
@@ -58,7 +58,7 @@ if __name__=="__main__":
     #proc_list.append("iFLD")
     #proc_list.append("3FLD_fast")
     #proc_list.append("3FLD")
-    #proc_list.append("linReg")
+    #proc_list.append("linFLD")
     
     for name in proc_list:
         mk_img(name)

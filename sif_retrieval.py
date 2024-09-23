@@ -20,7 +20,10 @@ sif_opts_FLD_Cendrero19_O2b.outL_wband=(680, 686)
 sif_opts_FLD_Cendrero19_O2b.outR_wband=(697, 698) 
 
 sif_opts_rFLD_custom_O2a=sif_opts_base()
+sif_opts_rFLD_custom_O2b=sif_opts_base()
 sif_opts_rFLD_custom_O2a.in_wband=(759.5, 765) 
+sif_opts_rFLD_custom_O2b.in_wband=(686, 697) 
+
 
 def diff_matrix(size,order=1):
     """returns a difference operator of the type 
@@ -48,7 +51,8 @@ def sif_ridgeReg_compute_pseudo_inverse(wref_spect, order=1, gamma=1., sif_opts=
                           gammaR=gamma, orderF=order, gammaF=gamma,sif_opts=sif_opts)
 
 
-def sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=1, gammaR=1., orderF=1, gammaF=1.,sif_opts=sif_opts_FLD_Cendrero19_O2a):
+def sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=1, gammaR=1., orderF=1,
+                             gammaF=1.,sif_opts=sif_opts_FLD_Cendrero19_O2a,return_k=False):
     """ Calculate the pseudo inverse for the Ridge Regression
     problem.
     
@@ -74,6 +78,9 @@ def sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=1, gammaR=1., 
     for i in range(size):
         K[i,i]=wref.data[i]
         K[i,i+size]=1.0
+    if return_k:
+        return K
+
     KTK=np.matmul(K.T,K)
     
     #make the block matrix for the
@@ -87,12 +94,21 @@ def sif_ridgeReg_compute_pseudo_inverse_RFopts(wref_spect, orderR=1, gammaR=1., 
 
 
 def sif_ridgeReg_use_precomp_inverse( target_spect, pseudo_inv,sif_opts=sif_opts_FLD_Cendrero19_O2a, out_wvl=None ):
+
+    if out_wvl is None:
+        out_wvl=targ.wavl[int(size/2.)]
+
+    (R,F)=sif_ridgeReg_use_precomp_inverse_full_output(target_spect,pseudo_inv,sif_opts=sif_opts)
+    return(F.closest_to_wavl(out_wvl)[1])
+
+
+def sif_ridgeReg_use_precomp_inverse_full_output( target_spect, pseudo_inv,sif_opts=sif_opts_FLD_Cendrero19_O2a ):
     """ Compute the fluorescence using ridge regression. Similar in concept 
     to iFLD in that it account for change in R and F over the window,
     but here they are both determined in a single step. Allows for all
     data points from an absorption feature to be used in the retrieval. 
     
-    Returns the matrix: (K^TK+gB^TB)^{-1}K^T as a 2D numpy array
+    Returns the fluorescence in the units of the input data 
     
     target_spect:    (Spectra object) observed radiance from a fluorescing target 
     pseudo_inv:      (2D numpy array) the precomputed inverse matrix
@@ -107,14 +123,20 @@ def sif_ridgeReg_use_precomp_inverse( target_spect, pseudo_inv,sif_opts=sif_opts
     targ.trim(wl_min,wl_max)
     size=len(targ.data)
 
-    if out_wvl is None:
-        out_wvl=targ.wavl[int(size/2.)]
+    F=deepcopy(targ)
+    R=deepcopy(targ)
+
+    #if out_wvl is None:
+    #    out_wvl=targ.wavl[int(size/2.)]
 
     out=np.matmul(pseudo_inv,targ.data)
-    #copy SIF into targ
-    targ.data=out[size:]
-    
-    return(targ.closest_to_wavl(out_wvl)[1])
+    #copy SIF into F
+    F.data=out[size:]
+    #copy reflectance into F
+    R.data=out[:size]
+
+    return((R,F))
+    #return(targ.closest_to_wavl(out_wvl)[1])
     
     
 def sif_linReg_compute_pseudo_inverse( wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
