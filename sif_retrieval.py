@@ -298,6 +298,9 @@ def sif_3FLD_use_predetermined_idx( target_spect, wref_spect, sif_opts ):
     return (Lin-Ecorr*(w21*Lout_L+w22*Lout_R))/(1-Ecorr)
 
 
+def sif_sFLD( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
+    return sif_sFLD_full_search( target_spect, wref_spect, sif_opts=sif_opts )
+
 def sif_sFLD_full_search( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
     """calculate SIF using the sFLD method defined in 
     Cendrero-Mateo et al. (2019) https://doi.org/10.3390/rs11080962
@@ -322,6 +325,8 @@ def sif_sFLD_full_search( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendre
 
     return (Eout*Lin-Ein*Lout)/(Eout-Ein)
 
+def sif_3FLD( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
+    return sif_3FLD_full_search( target_spect, wref_spect, sif_opts=sif_opts )
 
 def sif_3FLD_full_search( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a ):
     """calculate SIF using the 3FLD method defined in 
@@ -357,6 +362,9 @@ def sif_3FLD_full_search( target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendre
 
     return (Lin-Ecorr*(w21*Lout_L+w22*Lout_R))/(1-Ecorr)
 
+
+def sif_iFLD(target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a):
+    return sif_iFLD_full_search(target_spect, wref_spect, sif_opts=sif_opts)
 
 def sif_iFLD_full_search(target_spect, wref_spect, sif_opts=sif_opts_FLD_Cendrero19_O2a):
     """calculate SIF using the iFLD method defined in 

@@ -73,8 +73,8 @@ def simplest_w_lrt_upwelling():
     u.options["fluorescence"]="fluorescence_file fluor_flat_0p015_hires.flu"
     u.options["albedo"]="albedo %f"%alb
     u.options["zout"]="sur"
-    #u.options["zout"]=0.01
-    u.options["umu"]=1.0
+    #u.options["zout"]=0.1
+    #u.options["umu"]=1.0
     
     #get irradiance by adding edir and edn
     #note: all lrt runs after the first one should

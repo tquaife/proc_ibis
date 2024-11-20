@@ -16,7 +16,7 @@ def convert_units_Qcm2_to_Wm2(wvl,datum):
     #Planck constant
     h=6.626E-34
     #speed of light 
-    c=3E8
+    c=2.99792E8
     #convert wavlength to m
     w=(wvl*10**-9)
     #energy per photon (J/Q)
@@ -30,9 +30,6 @@ def convert_units_Qcm2_to_Wm2(wvl,datum):
 class libRadSpectra(Spectra):
 
     def __init__(self, fname=None,ftype="TXT",wavlCol=0,dataCol=1,hdrLines=0):
-        """Extends the ARSF BilReader class to add 
-        elements specific to the IBIS data
-        """
         super().__init__(fname=fname,ftype=ftype,wavlCol=wavlCol,dataCol=dataCol,hdrLines=hdrLines)
 
     def convert_units_Qcm2_to_Wm2(self):
