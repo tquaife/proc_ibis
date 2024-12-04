@@ -5,16 +5,41 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from ibis_simulator import libRadSpectra, convert_units_Qcm2_to_Wm2
-from sif_retrieval import sif_sFLD, sif_3FLD, sif_iFLD, sif_opts_FLD_Cendrero19_O2a, sif_opts_FLD_Cendrero19_O2b
+from sif_retrieval import *
 from run_libradtran import uvspec
 
+def do_plots():    
+
+    plt.plot(flat_sif.wavl,flat_sif.data,label="SIF alb=0.1")
+    plt.plot(flat_sif_norefl.wavl,flat_sif_norefl.data,label="SIF alb=0.0")
+    
+    #these two are the same at the surface
+    plt.plot(flat_sif_edir.wavl,flat_sif_edir.data+flat_sif_edif.data,"k-",label="total downward flux at z (flat sif)")
+    plt.plot(flat_sif_edir.wavl,flat_nosif_edir.data+flat_nosif_edif.data,"--",label="total downward flux at z (flat NO sif)")
+
+    #---
+    #presumably the difference between the ones above and below this comment
+    #is multiple scattering between the surface an the atmosphere
+    #---
+
+    #these are all the same at the surface:
+    plt.plot(white_ref.wavl,white_ref.data*np.pi,"b-",label="white ref * pi",linewidth=3.)    
+    plt.plot(white_ref_edir.wavl,white_ref_edir.data+white_ref_edif.data,"r--",label="total downward flux at z (white ref)",linewidth=2.)
+    plt.plot(white_ref_eup.wavl,white_ref_eup.data,"y-.",label="eup from white_ref")
+
+    plt.title("Z out ="+u.options["zout"]+"km")
+
+    plt.legend()
+    plt.show()
+
+    
 
 if __name__=="__main__":
 
     #setting this to False means libRadTran will
     #only run if the output file for the run doesn't exist
-    overwrite=True
-    #overwrite=False
+    #overwrite=True
+    overwrite=False
 
     #load ibis wavelengths
     ibis_wavls=np.genfromtxt("ibis_wavelengths.txt")    
@@ -91,35 +116,25 @@ if __name__=="__main__":
     
     #flat_sif.data*=np.pi/2.
 
+
     print("sFLD O2a: ",sif_sFLD(flat_sif,white_ref,sif_opts=sif_opts_FLD_Cendrero19_O2a)*1000)
-    print("sFLD O2b: ",sif_sFLD(flat_sif,white_ref,sif_opts=sif_opts_FLD_Cendrero19_O2b)*1000)
     print("3FLD O2a: ",sif_3FLD(flat_sif,white_ref,sif_opts=sif_opts_FLD_Cendrero19_O2a)*1000)
-    print("3FLD O2b: ",sif_3FLD(flat_sif,white_ref,sif_opts=sif_opts_FLD_Cendrero19_O2b)*1000)
     print("iFLD O2a: ",sif_iFLD(flat_sif,white_ref,sif_opts=sif_opts_FLD_Cendrero19_O2a)*1000)
+
+    pseudo_inv=sif_ridgeReg_compute_pseudo_inverse_RFopts(white_ref, orderR=1, gammaR=1., orderF=1,
+                             gammaF=1.,sif_opts=sif_opts_FLD_Cendrero19_O2a)
+    rsif=sif_ridgeReg_use_precomp_inverse(flat_sif, pseudo_inv,sif_opts=sif_opts_FLD_Cendrero19_O2a, out_wvl=None)
+    print("rFLD O2a: ",rsif*1000)
+
+    print("sFLD O2b: ",sif_sFLD(flat_sif,white_ref,sif_opts=sif_opts_FLD_Cendrero19_O2b)*1000)
+    print("3FLD O2b: ",sif_3FLD(flat_sif,white_ref,sif_opts=sif_opts_FLD_Cendrero19_O2b)*1000)
     print("iFLD O2b: ",sif_iFLD(flat_sif,white_ref,sif_opts=sif_opts_FLD_Cendrero19_O2b)*1000)
+    pseudo_inv=sif_ridgeReg_compute_pseudo_inverse_RFopts(white_ref, orderR=1, gammaR=1., orderF=1,
+                             gammaF=1.,sif_opts=sif_opts_FLD_Cendrero19_O2b)
+    rsif=sif_ridgeReg_use_precomp_inverse(flat_sif, pseudo_inv,sif_opts=sif_opts_FLD_Cendrero19_O2b, out_wvl=None)
+    print("rFLD O2b: ",rsif*1000)
    
-    
-    plt.plot(flat_sif.wavl,flat_sif.data,label="SIF alb=0.1")
-    plt.plot(flat_sif_norefl.wavl,flat_sif_norefl.data,label="SIF alb=0.0")
-    
-    #these two are the same at the surface
-    plt.plot(flat_sif_edir.wavl,flat_sif_edir.data+flat_sif_edif.data,"k-",label="total downward flux at z (flat sif)")
-    plt.plot(flat_sif_edir.wavl,flat_nosif_edir.data+flat_nosif_edif.data,"--",label="total downward flux at z (flat NO sif)")
+    #do_plots()
+   
 
-    #---
-    #presumably the difference between the ones above and below this comment
-    #is multiple scattering between the surface an the atmosphere
-    #---
-
-    #these are all the same at the surface:
-    plt.plot(white_ref.wavl,white_ref.data*np.pi,"b-",label="white ref * pi",linewidth=3.)    
-    plt.plot(white_ref_edir.wavl,white_ref_edir.data+white_ref_edif.data,"r--",label="total downward flux at z (white ref)",linewidth=2.)
-    plt.plot(white_ref_eup.wavl,white_ref_eup.data,"y-.",label="eup from white_ref")
-
-    plt.title("Z out ="+u.options["zout"]+"km")
-
-    plt.legend()
-    plt.show()
-
-    
     
